@@ -68,6 +68,7 @@ def criar_admin_padrao():
             print("USUARIOS CRIADOS!") 
 
 def init_db():
+    DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     DB_PATH.parent.mkdir(exist_ok=True)
     with get_db() as db:
         db.executescript("""
