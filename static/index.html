@@ -83,7 +83,7 @@
   .upload-area input{display:none;}
   /* Botões de ação OS */
   .os-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;}
-  select option{background:var(--bg2);}
+  select option{background:var(--bg2);}.btn-tipo{padding:6px 14px;border-radius:6px;border:1.5px solid #cbd5e0;background:#fff;color:#4a5568;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;}.btn-tipo:hover{border-color:#2563eb;color:#2563eb;}.ativo-tipo{background:#2563eb;color:#fff;border-color:#2563eb;}.periodo-opt{padding:9px 14px;cursor:pointer;font-size:13px;color:#374151;border-radius:6px;transition:background .1s;}.periodo-opt:hover{background:#eff6ff;color:#2563eb;}.ativo-periodo{background:#eff6ff;color:#2563eb;font-weight:600;}.badge-aberta{background:#fef9c3;color:#a16207;border:1px solid #fde68a;}.badge-fechada{background:#dcfce7;color:#15803d;}.badge-cancelada{background:#fee2e2;color:#dc2626;}
   ::-webkit-scrollbar{width:6px;height:6px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
 </style>
 </head>
@@ -306,13 +306,7 @@ async function renderDashboard() {
     <div class="table-wrap">
       <div class="table-header"><div class="table-title">🕐 OS Recentes</div><button class="btn btn-primary btn-sm" onclick="abrirNovaOS()">+ Nova OS</button></div>
       <table><thead><tr><th>Nº</th><th>Data</th><th>Veículo</th><th>Cliente</th><th>Valor</th><th>Status</th></tr></thead>
-      <tbody>${d.os_recentes.map(o=>`<tr>
-        <td><span class="link" onclick="verOSId(${o.id})">#${o.numero}</span></td>
-        <td class="text2">${o.data||''}</td>
-        <td><strong class="mono">${o.veiculo_placa||''}</strong><br><span class="text2" style="font-size:12px">${o.veiculo_modelo||''}</span></td>
-        <td>${o.cliente_nome||''}</td>
-        <td style="color:var(--accent);font-weight:600">${fmt(o.valor_liquido)}</td>
-        <td>${badge(o.status)}</td></tr>`).join('')}</tbody></table></div>`;
+      <tbody>${d.os_recentes.map(o=>{var sit=o.status==='ABERTA'?'Em andamento':o.status==='FECHADA'?'Aprovado':'Cancelado';var bc=o.status==='ABERTA'?'fef9c3;color:#a16207;border:1px solid #fde68a':o.status==='FECHADA'?'dcfce7;color:#15803d':'fee2e2;color:#dc2626';return '<tr><td class=text2>'+o.data+'</td><td><span style=color:#2563eb;cursor:pointer;font-weight:600 onclick=verOSId('+o.id+')>#'+o.numero+'</span></td><td><strong style=font-size:13px>'+(o.cliente_nome||'')+'</strong><br><span style=font-family:monospace;font-size:12px;color:#4a5568>'+(o.veiculo_placa||'')+' '+(o.veiculo_modelo||'')+'</span></td><td style=font-size:12px;color:#4a5568>'+(o.tipo_negociacao||'')+'</td><td style=text-align:right;font-weight:600>'+fmt(o.valor_liquido)+'</td><td><span style=background:#'+bc+';padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600>'+sit+'</span></td><td><button class=btn style=background:#2563eb;color:#fff;padding:5px 12px;border-radius:6px;border:none;cursor:pointer;font-size:12px onclick=verOSId('+o.id+')>Ver</button></td></tr>';}).join('')}</tbody></table></div>`;
 }
 
 // ── OS ────────────────────────────────────────────────────────
@@ -328,7 +322,7 @@ async function renderOS() {
         <button class="btn btn-primary" onclick="abrirNovaOS()">+ Nova OS</button>
       </div>
       <table><thead><tr><th>Nº</th><th>Data</th><th>Veículo</th><th>Cliente</th><th>Valor</th><th>Pagamento</th><th>Status</th><th></th></tr></thead>
-      <tbody id="os-tbody"><tr><td colspan="8" style="text-align:center;padding:30px;color:var(--text2)">Carregando...</td></tr></tbody></table>
+      <tbody id="os-tbody"><tr><td colspan="7" style="text-align:center;padding:30px;color:var(--text2)">Carregando...</td></tr></tbody></table>
       <div class="pagination"><span class="page-info" id="os-info"></span>
         <button class="btn btn-ghost btn-sm" id="btn-prev" onclick="pgOS(-1)">← Anterior</button>
         <button class="btn btn-ghost btn-sm" id="btn-next" onclick="pgOS(1)">Próxima →</button>
@@ -347,7 +341,7 @@ async function carregarOS() {
   state.osTotal=d.total;
   const tbody=document.getElementById('os-tbody');
   if(!tbody)return;
-  tbody.innerHTML=d.items.length?d.items.map(o=>`<tr>
+  tbody.innerHTML=d.items.length?d.items.map(o=>{var sit=o.status==='ABERTA'?'Em andamento':o.status==='FECHADA'?'Aprovado':'Cancelado';var bc=o.status==='ABERTA'?'badge-aberta':o.status==='FECHADA'?'badge-fechada':'badge-cancelada';return `<tr>
     <td><span class="link" onclick="verOSId(${o.id})">#${o.numero}</span></td>
     <td class="text2">${o.data||''}</td>
     <td><strong class="mono">${o.veiculo_placa||''}</strong><br><span class="text2" style="font-size:12px">${o.veiculo_modelo||''}</span></td>
@@ -356,7 +350,7 @@ async function carregarOS() {
     <td class="text2">${o.forma_pagamento||'-'}</td>
     <td>${badge(o.status)}</td>
     <td><button class="btn btn-primary btn-sm" onclick="verOSId(${o.id})">Ver</button></td></tr>`).join('')
-    :'<tr><td colspan="8" style="text-align:center;padding:30px;color:var(--text2)">Nenhuma OS encontrada</td></tr>';
+    :'<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--text2)">Nenhuma OS encontrada</td></tr>';
   const ini=state.osPage*PG+1,fim=Math.min((state.osPage+1)*PG,d.total);
   const info=document.getElementById('os-info');if(info)info.textContent=`${ini}–${fim} de ${d.total}`;
   const prev=document.getElementById('btn-prev'),next=document.getElementById('btn-next');
@@ -830,6 +824,13 @@ function enviarLook() {
 }
 
 // ── UTILS ─────────────────────────────────────────────────────
+var periodoAtual={tipo:'mes',de:null,ate:null};
+var tipoNegAtual='';
+function togglePeriodo(){var d=document.getElementById('periodo-dropdown');if(d)d.style.display=d.style.display==='none'?'block':'none';}
+function selecionarPeriodo(tipo,label){periodoAtual.tipo=tipo;var el=document.getElementById('periodo-label');if(el)el.textContent=label;var cp=document.getElementById('custom-period');if(cp)cp.style.display=tipo==='custom'?'block':'none';if(tipo!=='custom'){var d=document.getElementById('periodo-dropdown');if(d)d.style.display='none';state.osPage=0;carregarOS();}}
+function aplicarCustom(){var de=document.getElementById('data-de').value;var ate=document.getElementById('data-ate').value;periodoAtual={tipo:'custom',de:de,ate:ate};var d=document.getElementById('periodo-dropdown');if(d)d.style.display='none';state.osPage=0;carregarOS();}
+function filtrarTipo(v){tipoNegAtual=v;document.querySelectorAll('.btn-tipo').forEach(b=>b.classList.remove('ativo-tipo'));var ids={'':'tipo-todos','Venda':'tipo-vendas','Orcamento':'tipo-orc'};var btn=document.getElementById(ids[v]);if(btn)btn.classList.add('ativo-tipo');state.osPage=0;carregarOS();}
+async function carregarTotais(){try{var p=new URLSearchParams({busca:state.osBusca,limit:9999,offset:0});var d=await api('/os?'+p);var ab=d.items.filter(o=>o.status==='ABERTA').length;var fe=d.items.filter(o=>o.status==='FECHADA').length;var ca=d.items.filter(o=>o.status==='CANCELADA').length;var vt=d.items.reduce((s,o)=>s+(o.valor_liquido||0),0);var el=document.getElementById('os-totais');if(el)el.innerHTML='<div style=background:#fef9c3;border:1.5px solid #fde68a;border-radius:10px;padding:14px 18px><div style=font-size:11px;color:#a16207;font-weight:600;text-transform:uppercase>Em andamento</div><div style=font-size:22px;font-weight:800;color:#a16207>'+ab+'</div></div><div style=background:#dcfce7;border:1.5px solid #bbf7d0;border-radius:10px;padding:14px 18px><div style=font-size:11px;color:#15803d;font-weight:600;text-transform:uppercase>Aprovados</div><div style=font-size:22px;font-weight:800;color:#15803d>'+fe+'</div></div><div style=background:#fee2e2;border:1.5px solid #fecaca;border-radius:10px;padding:14px 18px><div style=font-size:11px;color:#dc2626;font-weight:600;text-transform:uppercase>Cancelados</div><div style=font-size:22px;font-weight:800;color:#dc2626>'+ca+'</div></div><div style=background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:10px;padding:14px 18px><div style=font-size:11px;color:#1d4ed8;font-weight:600;text-transform:uppercase>Valor Total</div><div style=font-size:22px;font-weight:800;color:#1d4ed8>'+fmt(vt)+'</div></div>';}catch(e){}}
 function fecharModal(id){document.getElementById(id).classList.remove('open');}
 document.querySelectorAll('.modal-overlay').forEach(el=>{el.addEventListener('click',e=>{if(e.target===el)el.classList.remove('open');});});
 document.addEventListener('click',e=>{if(!e.target.closest('.ac-wrap'))document.querySelectorAll('.ac-list').forEach(l=>l.style.display='none');});
