@@ -25,7 +25,8 @@ import secrets
 
 # ── Configuração ──────────────────────────────────────────────
 BASE_DIR = Path(__file__).parent
-DB_PATH  = BASE_DIR / "db" / "oficina.db"
+import os as _os
+DB_PATH  = Path(_os.environ.get("DB_PATH", str(BASE_DIR / "db" / "oficina.db")))
 (BASE_DIR / "db").mkdir(parents=True, exist_ok=True)
 app      = FastAPI(title="Sistema Oficina")
 
