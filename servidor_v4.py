@@ -256,7 +256,7 @@ def importar_backup():
                 valor  = v.get("valor_liquido") or v.get("valor_total") or 0
                 bruto  = v.get("valor_bruto")   or v.get("valor_total") or 0
                 desc   = v.get("desconto_total") or v.get("valor_desconto") or 0
-                status = "CANCELADA" if v.get("data_cancelamento") else "FECHADA"
+                status = v.get("status_override_aplicado") or ("CANCELADA" if v.get("data_cancelamento") else "FECHADA")
                 cur = db.execute("""
                     INSERT OR IGNORE INTO ordens_servico
                     (numero, data, status, cliente_nome, veiculo_placa, veiculo_modelo,
