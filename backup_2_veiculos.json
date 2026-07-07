@@ -1,6 +1,6 @@
 {
   "_metadata": {
-    "gerado_em": "2026-07-07T12:31:58.970131",
+    "gerado_em": "2026-07-07T13:14:52.917533",
     "descricao": "Backup Conta Azul COMPLETO v5",
     "formas_pagamento": [
       "DINHEIRO",
@@ -9576,6 +9576,19 @@
       "valor_total": 5390.0,
       "primeira_data": "29/05/2026",
       "ultima_data": "02/06/2026"
+    },
+    {
+      "placa": "ONP0A40",
+      "modelo": "MERCEDES A45",
+      "cliente_raw": "MERCEDES A45 ONP0A40",
+      "os_numeros": [
+        3960,
+        3991
+      ],
+      "total_os": 2,
+      "valor_total": 4610.0,
+      "primeira_data": "26/05/2026",
+      "ultima_data": "30/06/2026"
     },
     {
       "placa": "BEP2987",
@@ -24314,18 +24327,6 @@
       "ultima_data": "25/05/2026"
     },
     {
-      "placa": "ONP0A40",
-      "modelo": "MERCEDES A45",
-      "cliente_raw": "MERCEDES A45 ONP0A40",
-      "os_numeros": [
-        3960
-      ],
-      "total_os": 1,
-      "valor_total": 4610.0,
-      "primeira_data": "26/05/2026",
-      "ultima_data": "26/05/2026"
-    },
-    {
       "placa": "QJH1C44",
       "modelo": "GOLF GTI",
       "cliente_raw": "GOLF GTI QJH1C44",
@@ -24432,6 +24433,42 @@
       "valor_total": 4490.0,
       "primeira_data": "19/06/2026",
       "ultima_data": "19/06/2026"
+    },
+    {
+      "placa": "END7B03",
+      "modelo": "BMW M3 G80",
+      "cliente_raw": "BMW M3 G80 - END7B03",
+      "os_numeros": [
+        3995
+      ],
+      "total_os": 1,
+      "valor_total": 0.0,
+      "primeira_data": "26/06/2026",
+      "ultima_data": "26/06/2026"
+    },
+    {
+      "placa": "QMB5G80",
+      "modelo": "AUDI A3",
+      "cliente_raw": "AUDI A3 QMB5G80",
+      "os_numeros": [
+        3994
+      ],
+      "total_os": 1,
+      "valor_total": 0.0,
+      "primeira_data": "30/06/2026",
+      "ultima_data": "30/06/2026"
+    },
+    {
+      "placa": "BAS1F25",
+      "modelo": "S10",
+      "cliente_raw": "S10 BAS1F25",
+      "os_numeros": [
+        3996
+      ],
+      "total_os": 1,
+      "valor_total": 0.0,
+      "primeira_data": "30/06/2026",
+      "ultima_data": "30/06/2026"
     }
   ]
 }
