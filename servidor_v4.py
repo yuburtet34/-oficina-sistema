@@ -515,7 +515,7 @@ async def login(req: Request):
         token=secrets.token_hex(32) 
         db.execute("INSERT INTO sessoes (token,usuario_id,expira_em) VALUES (?,?,datetime('now','localtime','+7 days'))",(token,row["id"])) 
         resp=JSONResponse({"ok":True,"nome":row["nome"],"perfil":row["perfil"]}) 
-        resp.set_cookie("session_token",token,httponly=True,max_age=604800,samesite="lax") 
+        resp.set_cookie("session_token",token,httponly=True,max_age=604800,samesite="none",secure=True) 
         return resp 
 @app.post("/api/logout") 
 def logout(session_token: str=Cookie(None)): 
