@@ -267,6 +267,7 @@
 </div>
 
 <script>
+try{
 const state = { page:'dashboard', osPage:0, osTotal:0, osBusca:'', osStatus:'', editandoOsId:null, osAtual:null, midiasNovas:[] };
 const PG = 50;
 
@@ -840,7 +841,7 @@ async function fazerLogout(){await fetch('/api/logout',{method:'POST'});mostrarL
 async function verificarLogin(){try{var r=await fetch('/api/me');if(r.ok){usuarioAtual=await r.json();esconderLogin();renderDashboard();}else{mostrarLogin();}}catch(e){mostrarLogin();}}
 document.getElementById('lin-btn').addEventListener('click',fazerLogin);
 document.getElementById('lin-s').addEventListener('keydown',function(e){if(e.key==='Enter')fazerLogin();});
-verificarLogin();
+verificarLogin();}catch(e){console.error("ERRO SCRIPT:",e.message,e.stack);}
 </script>
 </body>
 </html>
