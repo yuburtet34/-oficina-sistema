@@ -307,7 +307,7 @@ def dashboard():
             "os_recentes":   [dict(r) for r in db.execute("""
                 SELECT numero, data, cliente_nome, veiculo_placa, veiculo_modelo,
                        valor_liquido, status, forma_pagamento
-                FROM ordens_servico ORDER BY id DESC LIMIT 8
+                FROM ordens_servico ORDER BY id DESC LIMIT 20
             """).fetchall()],
         }
 
