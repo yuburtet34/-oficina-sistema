@@ -19,22 +19,22 @@
   .logo{padding:24px 20px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;}
   .logo-icon{font-size:28px;}.logo-text{font-size:15px;font-weight:700;color:var(--accent);line-height:1.2;}.logo-sub{font-size:11px;color:var(--text2);}
   nav{padding:12px 0;flex:1;}
-  .nav-item{display:flex;align-items:center;gap:12px;padding:11px 20px;cursor:pointer;color:var(--text2);font-size:14px;transition:all .15s;border-left:3px solid transparent;}
-  .nav-item:hover{background:var(--bg3);color:var(--text);}.nav-item.active{background:var(--bg3);color:var(--accent);border-left-color:var(--accent);}
+  .nav-item{display:flex;align-items:center;gap:12px;padding:11px 20px;cursor:pointer;color:rgba(255,255,255,.75);font-size:14px;transition:all .15s;border-left:3px solid transparent;}
+  .nav-item:hover{background:rgba(255,255,255,.12);color:#fff;}.nav-item.active{background:rgba(255,255,255,.18);color:#fff;border-left-color:#fff;font-weight:600;}
   .nav-icon{font-size:18px;width:22px;text-align:center;}
-  .page-title{font-size:22px;font-weight:700;margin-bottom:20px;}
+  .page-title{font-size:22px;font-weight:700;margin-bottom:20px;color:#111827;}
   .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:28px;}
-  .card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:18px;position:relative;overflow:hidden;}
-  .card-value{font-size:28px;font-weight:800;color:var(--accent);}.card-label{font-size:12px;color:var(--text2);margin-top:4px;}.card-icon{position:absolute;right:14px;top:14px;font-size:26px;opacity:.15;}
+  .card{background:#ffffff;border:1.5px solid #cbd5e0;box-shadow:0 1px 3px rgba(0,0,0,.06);min-height:80px;border-radius:var(--radius);padding:18px;position:relative;overflow:hidden;}
+  .card-value{font-size:28px;font-weight:800;color:#2563eb;}.card-label{font-size:12px;color:#4a5568;margin-top:4px;}.card-icon{position:absolute;right:14px;top:14px;font-size:26px;opacity:.15;}
   .table-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
   .table-header{padding:14px 18px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);gap:12px;flex-wrap:wrap;}
   .table-title{font-weight:600;font-size:15px;}
   table{width:100%;border-collapse:collapse;}
   th{background:#1e3a5f;color:#fff;font-size:11px;text-transform:uppercase;letter-spacing:.05em;padding:10px 14px;text-align:left;}
-  td{padding:11px 14px;border-bottom:1px solid var(--border);font-size:13.5px;}
+  td{padding:11px 14px;border-bottom:1px solid #e2e8f0;font-size:13.5px;color:#111827;}
   tr:last-child td{border-bottom:none;}tr:hover td{background:var(--bg3);}
   .badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;}
-  .badge-aberta{background:rgba(52,152,219,.15);color:var(--blue);}.badge-fechada{background:rgba(46,204,113,.12);color:var(--green);}.badge-cancelada{background:rgba(231,76,60,.12);color:var(--red);}
+  .badge-aberta{background:#fef9c3;color:#a16207;border:1px solid #fde68a;}.badge-fechada{background:#dcfce7;color:#15803d;}.badge-cancelada{background:#fee2e2;color:#dc2626;}
   input,select,textarea{background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:7px;padding:9px 12px;font-size:13.5px;font-family:var(--font);outline:none;transition:border .15s;width:100%;}
   input:focus,select:focus,textarea:focus{border-color:var(--accent);}
   .search-input{max-width:280px;}
@@ -85,6 +85,20 @@
   .os-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;}
   select option{background:var(--bg2);}
   ::-webkit-scrollbar{width:6px;height:6px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+
+  .card-status{flex:1;padding:16px 20px;border-radius:10px;cursor:pointer;transition:all .15s;border:2px solid transparent;text-align:center;}
+  .card-status.ativo{border-color:#374151;}
+  .card-status-todos{background:#dbeafe;}
+  .card-status-ab{background:#fef9c3;}
+  .card-status-fe{background:#dcfce7;}
+  .card-status-ca{background:#fee2e2;}
+  .periodo-wrap{position:relative;display:inline-block;}
+  .periodo-btn{display:flex;align-items:center;gap:8px;padding:8px 16px;border-radius:7px;border:1.5px solid #cbd5e0;background:#fff;color:#374151;font-size:13px;cursor:pointer;min-width:180px;justify-content:space-between;}
+  .periodo-btn:hover{border-color:#2563eb;}
+  .periodo-dropdown{display:none;position:absolute;top:calc(100% + 4px);left:0;background:#fff;border:1.5px solid #cbd5e0;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:999;min-width:220px;padding:6px;}
+  .periodo-opt{padding:9px 14px;cursor:pointer;font-size:13px;color:#374151;border-radius:6px;}
+  .periodo-opt:hover{background:#eff6ff;color:#2563eb;}
+  .periodo-opt.ativo{background:#eff6ff;color:#2563eb;font-weight:600;}
 </style>
 </head>
 <body>
@@ -266,7 +280,6 @@
   </div>
 </div>
 
-<div id="login-overlay" style="display:none;position:fixed;inset:0;background:#1a3a6b;z-index:9999;align-items:center;justify-content:center"><div style="background:#fff;border-radius:16px;padding:40px;width:360px"><h2 style="text-align:center;color:#1a3a6b;margin-bottom:20px;font-size:16px">ALTA PERFORMANCE MOTORSPORT</h2><input id="lin-u" placeholder="Usuario" style="width:100%;padding:10px;border:1.5px solid #cbd5e0;border-radius:8px;margin-bottom:10px;box-sizing:border-box"><input id="lin-s" type="password" placeholder="Senha" style="width:100%;padding:10px;border:1.5px solid #cbd5e0;border-radius:8px;margin-bottom:8px;box-sizing:border-box"><div id="lin-e" style="display:none;color:#dc2626;font-size:12px;margin-bottom:8px"></div><button id="lin-btn" style="width:100%;padding:12px;background:#2563eb;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer">Entrar</button></div></div>
 <script>
 const state = { page:'dashboard', osPage:0, osTotal:0, osBusca:'', osStatus:'', editandoOsId:null, osAtual:null, midiasNovas:[] };
 const PG = 50;
@@ -323,9 +336,24 @@ async function renderOS() {
     <div class="table-wrap">
       <div class="table-header">
         <input class="search-input" placeholder="🔍 Placa, cliente, nº..." oninput="filtrarOS(this.value)">
-        <select onchange="filtrarOSStatus(this.value)" style="width:160px">
-          <option value="">Todos os status</option><option value="ABERTA">Abertas</option><option value="FECHADA">Fechadas</option><option value="CANCELADA">Canceladas</option>
-        </select>
+        <<div style="display:flex;gap:10px;flex:1">
+  <div id="card-todos" class="card-status card-status-todos ativo" onclick="filtrarOSStatus('')">
+    <div style="font-size:11px;font-weight:700;color:#1d4ed8;text-transform:uppercase">Todos</div>
+    <div id="card-todos-val" style="font-size:15px;font-weight:800;color:#1d4ed8">...</div>
+  </div>
+  <div id="card-aberta" class="card-status card-status-ab" onclick="filtrarOSStatus('ABERTA')">
+    <div style="font-size:11px;font-weight:700;color:#a16207;text-transform:uppercase">Em andamento</div>
+    <div id="card-aberta-val" style="font-size:15px;font-weight:800;color:#a16207">...</div>
+  </div>
+  <div id="card-fechada" class="card-status card-status-fe" onclick="filtrarOSStatus('FECHADA')">
+    <div style="font-size:11px;font-weight:700;color:#15803d;text-transform:uppercase">Aprovados</div>
+    <div id="card-fechada-val" style="font-size:15px;font-weight:800;color:#15803d">...</div>
+  </div>
+  <div id="card-cancelada" class="card-status card-status-ca" onclick="filtrarOSStatus('CANCELADA')">
+    <div style="font-size:11px;font-weight:700;color:#dc2626;text-transform:uppercase">Cancelados</div>
+    <div id="card-cancelada-val" style="font-size:15px;font-weight:800;color:#dc2626">...</div>
+  </div>
+</div>
         <button class="btn btn-primary" onclick="abrirNovaOS()">+ Nova OS</button>
       </div>
       <table><thead><tr><th>Nº</th><th>Data</th><th>Veículo</th><th>Cliente</th><th>Valor</th><th>Pagamento</th><th>Status</th><th></th></tr></thead>
@@ -334,7 +362,7 @@ async function renderOS() {
         <button class="btn btn-ghost btn-sm" id="btn-prev" onclick="pgOS(-1)">← Anterior</button>
         <button class="btn btn-ghost btn-sm" id="btn-next" onclick="pgOS(1)">Próxima →</button>
       </div></div>`;
-  state.osPage=0; await carregarOS();
+  state.osPage=0; await carregarOS(); atualizarCardsOS();
 }
 
 let osTimer;
@@ -835,13 +863,96 @@ function fecharModal(id){document.getElementById(id).classList.remove('open');}
 document.querySelectorAll('.modal-overlay').forEach(el=>{el.addEventListener('click',e=>{if(e.target===el)el.classList.remove('open');});});
 document.addEventListener('click',e=>{if(!e.target.closest('.ac-wrap'))document.querySelectorAll('.ac-list').forEach(l=>l.style.display='none');});
 
-function mostrarLogin(){document.getElementById('login-overlay').style.display='flex';document.getElementById('app').style.display='none';}
-function esconderLogin(){document.getElementById('login-overlay').style.display='none';document.getElementById('app').style.display='flex';}
-async function fazerLogin(){var u=document.getElementById('lin-u').value.trim();var s=document.getElementById('lin-s').value;var e=document.getElementById('lin-e');e.style.display='none';if(!u||!s){e.textContent='Preencha usuario e senha';e.style.display='block';return;}var r=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({usuario:u,senha:s})});if(r.ok){esconderLogin();renderDashboard();}else{e.textContent='Usuario ou senha incorretos';e.style.display='block';}}
-async function fazerLogout(){await fetch('/api/logout',{method:'POST'});mostrarLogin();}
-async function verificarLogin(){var r=await fetch('/api/me');if(r.ok){esconderLogin();renderDashboard();}else{mostrarLogin();}}
-document.getElementById('lin-btn').addEventListener('click',fazerLogin);document.getElementById('lin-s').addEventListener('keydown',function(e){if(e.key==='Enter')fazerLogin();});
-verificarLogin();
+
+var usuarioAtual = null;
+function mostrarLogin() {
+  var el = document.getElementById('login-overlay');
+  if (el) el.style.display = 'flex';
+  var ap = document.getElementById('app');
+  if (ap) ap.style.display = 'none';
+}
+function esconderLogin() {
+  var el = document.getElementById('login-overlay');
+  if (el) el.style.display = 'none';
+  var ap = document.getElementById('app');
+  if (ap) ap.style.display = 'flex';
+}
+async function fazerLogin() {
+  var u = document.getElementById('lin-u').value.trim();
+  var s = document.getElementById('lin-s').value;
+  var e = document.getElementById('lin-e');
+  e.style.display = 'none';
+  if (!u || !s) { e.textContent = 'Preencha usuario e senha'; e.style.display = 'block'; return; }
+  var r = await fetch('/api/login', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({usuario:u, senha:s})});
+  if (r.ok) { esconderLogin(); renderDashboard(); }
+  else { e.textContent = 'Usuario ou senha incorretos'; e.style.display = 'block'; }
+}
+async function fazerLogout() {
+  await fetch('/api/logout', {method:'POST'});
+  mostrarLogin();
+}
+async function verificarLogin() {
+  var r = await fetch('/api/me');
+  if (r.ok) { esconderLogin(); renderDashboard(); }
+  else { mostrarLogin(); }
+}
+function togglePeriodo() {
+  var d = document.getElementById('periodo-dropdown');
+  if (d) d.style.display = d.style.display === 'block' ? 'none' : 'block';
+}
+function selecionarPeriodo(tipo, label) {
+  var el = document.getElementById('periodo-label');
+  if (el) el.textContent = label;
+  document.querySelectorAll('.periodo-opt').forEach(o => o.classList.remove('ativo'));
+  if (event && event.target) event.target.classList.add('ativo');
+  var d = document.getElementById('periodo-dropdown');
+  if (d) d.style.display = 'none';
+  state.osPage = 0;
+  carregarOS();
+}
+function mudarMes(dir) { state.osPage = 0; carregarOS(); }
+function filtrarOSStatus(v) {
+  state.osStatus = v;
+  state.osPage = 0;
+  document.querySelectorAll('.card-status').forEach(b => b.classList.remove('ativo'));
+  var ids = {'':'card-todos','ABERTA':'card-aberta','FECHADA':'card-fechada','CANCELADA':'card-cancelada'};
+  var el = document.getElementById(ids[v] || 'card-todos');
+  if (el) el.classList.add('ativo');
+  carregarOS();
+}
+async function atualizarCardsOS() {
+  try {
+    var d = await api('/os?limit=9999&offset=0');
+    var ab = d.items.filter(o => o.status === 'ABERTA');
+    var fe = d.items.filter(o => o.status === 'FECHADA');
+    var ca = d.items.filter(o => o.status === 'CANCELADA');
+    var el;
+    el = document.getElementById('card-todos-val'); if(el) el.innerHTML = fmt(d.items.reduce((s,o)=>s+(o.valor_liquido||0),0)) + '<br><small>(' + d.items.length + ')</small>';
+    el = document.getElementById('card-aberta-val'); if(el) el.innerHTML = fmt(ab.reduce((s,o)=>s+(o.valor_liquido||0),0)) + '<br><small>(' + ab.length + ')</small>';
+    el = document.getElementById('card-fechada-val'); if(el) el.innerHTML = fmt(fe.reduce((s,o)=>s+(o.valor_liquido||0),0)) + '<br><small>(' + fe.length + ')</small>';
+    el = document.getElementById('card-cancelada-val'); if(el) el.innerHTML = fmt(ca.reduce((s,o)=>s+(o.valor_liquido||0),0)) + '<br><small>(' + ca.length + ')</small>';
+  } catch(e) {}
+}
+document.addEventListener('click', function(e) {
+  var w = document.getElementById('periodo-wrap');
+  if (w && !w.contains(e.target)) { var d = document.getElementById('periodo-dropdown'); if (d) d.style.display = 'none'; }
+});
+window.addEventListener('DOMContentLoaded', function() {
+  var btn = document.getElementById('lin-btn');
+  if (btn) btn.addEventListener('click', fazerLogin);
+  var inp = document.getElementById('lin-s');
+  if (inp) inp.addEventListener('keydown', function(e) { if (e.key === 'Enter') fazerLogin(); });
+  verificarLogin();
+});
+
 </script>
+<div id="login-overlay" style="display:none;position:fixed;inset:0;background:#1a3a6b;z-index:9999;align-items:center;justify-content:center">
+<div style="background:#fff;border-radius:16px;padding:40px;width:360px;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+<h2 style="text-align:center;color:#1a3a6b;margin-bottom:20px;font-size:16px;font-weight:900">ALTA PERFORMANCE MOTORSPORT</h2>
+<input id="lin-u" placeholder="Usuario" style="width:100%;padding:10px;border:1.5px solid #cbd5e0;border-radius:8px;margin-bottom:10px;box-sizing:border-box;font-size:14px">
+<input id="lin-s" type="password" placeholder="Senha" style="width:100%;padding:10px;border:1.5px solid #cbd5e0;border-radius:8px;margin-bottom:8px;box-sizing:border-box;font-size:14px">
+<div id="lin-e" style="display:none;color:#dc2626;font-size:12px;margin-bottom:8px"></div>
+<button id="lin-btn" style="width:100%;padding:12px;background:#2563eb;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer">Entrar</button>
+</div></div>
 </body>
 </html>
