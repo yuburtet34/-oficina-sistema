@@ -331,7 +331,7 @@ async function renderDashboard() {
 
 // ── OS ────────────────────────────────────────────────────────
 async function renderOS() {
-  document.getElementById('page-os').innerHTML=`
+  document.getElementById('page-os').innerHTML=`<div id="periodo-wrap" style="margin-bottom:12px"></div>
     <div class="page-title">📋 Ordens de Serviço</div>
     <div class="table-wrap">
       <div class="table-header">
@@ -362,11 +362,49 @@ async function renderOS() {
         <button class="btn btn-ghost btn-sm" id="btn-prev" onclick="pgOS(-1)">← Anterior</button>
         <button class="btn btn-ghost btn-sm" id="btn-next" onclick="pgOS(1)">Próxima →</button>
       </div></div>`;
-  state.osPage=0; await carregarOS(); atualizarCardsOS();
+  state.osPage=0; await carregarOS(); atualizarCardsOS();setTimeout(function(){initPeriodo();},50);
 }
 
 let osTimer;
 function filtrarOS(v){clearTimeout(osTimer);state.osBusca=v;state.osPage=0;osTimer=setTimeout(carregarOS,300);}
+function getPeriodoLabel() {
+  var hoje = new Date();
+  var d = new Date(hoje.getFullYear(), hoje.getMonth() + (window.periodoMesOffset||0), 1);
+  var nomes = ['Janeiro','Fevereiro','Marco','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  return nomes[d.getMonth()] + ' de ' + d.getFullYear();
+}
+function initPeriodo() {
+  var wrap = document.getElementById('periodo-wrap');
+  if (!wrap || wrap.querySelector('.periodo-btn')) return;
+  wrap.style.cssText = 'display:flex;align-items:center;gap:4px';
+  var html = '';
+  html += '<button onclick="mudarMes(-1)" style="padding:6px 10px;border-radius:7px;border:1.5px solid #cbd5e0;background:#fff;cursor:pointer">&#8249;</button>';
+  html += '<button class="periodo-btn" onclick="togglePeriodo()" id="periodo-btn" style="min-width:160px"><span id="periodo-label">' + getPeriodoLabel() + '</span> &#9660;</button>';
+  html += '<button onclick="mudarMes(1)" style="padding:6px 10px;border-radius:7px;border:1.5px solid #cbd5e0;background:#fff;cursor:pointer">&#8250;</button>';
+  html += '<div class="periodo-dropdown" id="periodo-dropdown">';
+  html += '<div class="periodo-opt" onclick="selecionarPeriodo(\'hoje\',\'Hoje\')">Hoje</div>';
+  html += '<div class="periodo-opt" onclick="selecionarPeriodo(\'semana\',\'Esta semana\')">Esta semana</div>';
+  html += '<div class="periodo-opt ativo" onclick="selecionarPeriodo(\'mes\',\'\')">Este m\u00eas</div>';
+  html += '<div class="periodo-opt" onclick="selecionarPeriodo(\'ano\',\'Este ano\')">Este ano</div>';
+  html += '<div class="periodo-opt" onclick="selecionarPeriodo(\'30dias\',\'30 dias\')">30 dias</div>';
+  html += '<div class="periodo-opt" onclick="selecionarPeriodo(\'12meses\',\'12 meses\')">12 meses</div>';
+  html += '<div class="periodo-opt" onclick="selecionarPeriodo(\'tudo\',\'Todo o per\u00edodo\')">Todo o per\u00edodo</div>';
+  html += '</div>';
+  wrap.innerHTML = html;
+}
+function togglePeriodo() {
+  var d = document.getElementById('periodo-dropdown');
+  if (!d) return;
+  if (d.style.display === 'block') { d.style.display = 'none'; return; }
+  var btn = document.getElementById('periodo-btn');
+  if (btn) {
+    var r = btn.getBoundingClientRect();
+    d.style.top = (r.bottom + 4) + 'px';
+    d.style.left = r.left + 'px';
+  }
+  d.style.display = 'block';
+}
+
 function filtrarOSStatus(v){state.osStatus=v;state.osPage=0;carregarOS();}
 function pgOS(dir){const n=state.osPage+dir;if(n<0||n*PG>=state.osTotal)return;state.osPage=n;carregarOS();}
 
@@ -911,6 +949,44 @@ function selecionarPeriodo(tipo, label) {
   carregarOS();
 }
 function mudarMes(dir) { state.osPage = 0; carregarOS(); }
+function getPeriodoLabel() {
+  var hoje = new Date();
+  var d = new Date(hoje.getFullYear(), hoje.getMonth() + (window.periodoMesOffset||0), 1);
+  var nomes = ['Janeiro','Fevereiro','Marco','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  return nomes[d.getMonth()] + ' de ' + d.getFullYear();
+}
+function initPeriodo() {
+  var wrap = document.getElementById('periodo-wrap');
+  if (!wrap || wrap.querySelector('.periodo-btn')) return;
+  wrap.style.cssText = 'display:flex;align-items:center;gap:4px';
+  var html = '';
+  html += '<button onclick="mudarMes(-1)" style="padding:6px 10px;border-radius:7px;border:1.5px solid #cbd5e0;background:#fff;cursor:pointer">&#8249;</button>';
+  html += '<button class="periodo-btn" onclick="togglePeriodo()" id="periodo-btn" style="min-width:160px"><span id="periodo-label">' + getPeriodoLabel() + '</span> &#9660;</button>';
+  html += '<button onclick="mudarMes(1)" style="padding:6px 10px;border-radius:7px;border:1.5px solid #cbd5e0;background:#fff;cursor:pointer">&#8250;</button>';
+  html += '<div class="periodo-dropdown" id="periodo-dropdown">';
+  html += '<div class="periodo-opt" onclick="selecionarPeriodo(\'hoje\',\'Hoje\')">Hoje</div>';
+  html += '<div class="periodo-opt" onclick="selecionarPeriodo(\'semana\',\'Esta semana\')">Esta semana</div>';
+  html += '<div class="periodo-opt ativo" onclick="selecionarPeriodo(\'mes\',\'\')">Este m\u00eas</div>';
+  html += '<div class="periodo-opt" onclick="selecionarPeriodo(\'ano\',\'Este ano\')">Este ano</div>';
+  html += '<div class="periodo-opt" onclick="selecionarPeriodo(\'30dias\',\'30 dias\')">30 dias</div>';
+  html += '<div class="periodo-opt" onclick="selecionarPeriodo(\'12meses\',\'12 meses\')">12 meses</div>';
+  html += '<div class="periodo-opt" onclick="selecionarPeriodo(\'tudo\',\'Todo o per\u00edodo\')">Todo o per\u00edodo</div>';
+  html += '</div>';
+  wrap.innerHTML = html;
+}
+function togglePeriodo() {
+  var d = document.getElementById('periodo-dropdown');
+  if (!d) return;
+  if (d.style.display === 'block') { d.style.display = 'none'; return; }
+  var btn = document.getElementById('periodo-btn');
+  if (btn) {
+    var r = btn.getBoundingClientRect();
+    d.style.top = (r.bottom + 4) + 'px';
+    d.style.left = r.left + 'px';
+  }
+  d.style.display = 'block';
+}
+
 function filtrarOSStatus(v) {
   state.osStatus = v;
   state.osPage = 0;
