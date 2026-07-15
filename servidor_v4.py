@@ -326,6 +326,12 @@ def listar_os(busca: str = "", status: str = "", mes: str = "", de: str = "", at
         if mes:
             where.append("strftime('%%Y-%%m',data)=?")
             params.append(mes)
+        if de:
+            where.append("(substr(data,7,4)||'-'||substr(data,4,2)||'-'||substr(data,1,2)) >= ?")
+            params.append(de)
+        if ate:
+            where.append("(substr(data,7,4)||'-'||substr(data,4,2)||'-'||substr(data,1,2)) <= ?")
+            params.append(ate)
         sql = f"SELECT * FROM ordens_servico WHERE {' AND '.join(where)} ORDER BY id DESC LIMIT ? OFFSET ?"
         rows = db.execute(sql, params + [limit, offset]).fetchall()
         total = db.execute(f"SELECT COUNT(*) FROM ordens_servico WHERE {' AND '.join(where)}", params).fetchone()[0]
