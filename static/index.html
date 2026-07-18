@@ -57,7 +57,7 @@
   .form-grid.cols3{grid-template-columns:1fr 1fr 1fr;}
   .form-full{grid-column:1/-1;}
   .form-group label{display:block;font-size:11px;color:var(--text2);margin-bottom:5px;text-transform:uppercase;letter-spacing:.05em;}
-  .item-row{display:grid;grid-template-columns:2fr 70px 100px 80px 90px 36px;gap:8px;align-items:center;margin-bottom:8px;}
+  .item-row{display:grid;grid-template-columns:2fr 1fr 70px 100px 90px 36px;gap:8px;align-items:center;margin-bottom:8px;}
   .item-row input{padding:7px 10px;font-size:13px;}
   .total-os{text-align:right;padding:12px 0 0;font-size:16px;font-weight:700;color:var(--accent);}
   .ac-wrap{position:relative;}
@@ -191,11 +191,11 @@
           <strong style="font-size:14px">Itens da OS</strong>
           <button class="btn btn-ghost btn-sm" onclick="addItem()">+ Adicionar Item</button>
         </div>
-        <div style="display:grid;grid-template-columns:2fr 70px 100px 80px 90px 36px;gap:8px;padding:0 0 6px;font-size:11px;color:var(--text2);text-transform:uppercase">
-          <span>Produto/Serviço</span><span>Qtd</span><span>Vlr Unit.</span><span>Desc.</span><span>Total</span><span></span>
+        <div style="display:grid;grid-template-columns:2fr 1fr 70px 100px 90px 36px;gap:8px;padding:0 0 6px;font-size:11px;color:var(--text2);text-transform:uppercase">
+          <span>Produto/Serviço</span><span>Descrição</span><span>Qtd</span><span>Vlr Unit.</span><span>Total</span><span></span>
         </div>
         <div id="itens-container"></div>
-        <div class="total-os" id="total-os">Total: R$ 0,00</div>
+        <div style="display:flex;align-items:center;justify-content:flex-end;gap:16px;padding:12px 0 0"><div style="display:flex;align-items:center;gap:8px;font-size:13px"><label style="color:#4a5568;font-weight:600">Desconto (R$):</label><input id="os-desconto" type="number" min="0" step="0.01" value="0" oninput="atualizarTotal()" style="width:100px;padding:6px;border:1.5px solid #cbd5e0;border-radius:6px;font-size:13px;text-align:right"></div><div class="total-os" id="total-os">Total: R$ 0,00</div></div>
       </div>
       <div class="form-group mt">
         <label>Observações</label>
@@ -384,7 +384,7 @@ async function carregarOS() {
     <td style="color:var(--accent);font-weight:600">${fmt(o.valor_liquido)}</td>
     <td class="text2">${o.forma_pagamento||'-'}</td>
     <td>${badge(o.status)}</td>
-    <td><button class="btn btn-ghost btn-sm" onclick="verOSId(${o.id})">Ver</button></td></tr>`).join('')
+    <td><button class="btn btn-ghost btn-sm" onclick="verOSId(${o.id})">Ver</button><button class="btn btn-primary btn-sm" style="margin-left:4px" onclick="editarOSId(${o.id})">Editar</button></td></tr>`).join('')
     :'<tr><td colspan="8" style="text-align:center;padding:30px;color:var(--text2)">Nenhuma OS encontrada</td></tr>';
   const ini=state.osPage*PG+1,fim=Math.min((state.osPage+1)*PG,d.total);
   const info=document.getElementById('os-info');if(info)info.textContent=`${ini}–${fim} de ${d.total}`;
@@ -413,10 +413,10 @@ async function verOSId(id) {
     </div>
     ${o.observacoes?`<div class="veiculo-card" style="margin-bottom:16px"><div class="text2" style="font-size:11px;margin-bottom:4px">OBSERVAÇÕES</div>${o.observacoes}</div>`:''}
     <table style="margin-bottom:12px">
-      <thead><tr><th>Produto/Serviço</th><th>Qtd</th><th>Vlr Unit.</th><th>Desc.</th><th>Total</th></tr></thead>
+      <thead><tr><th>Produto/Serviço</th><th>Descrição</th><th>Qtd</th><th>Vlr Unit.</th><th>Total</th></tr></thead>
       <tbody>${(o.itens||[]).map(i=>`<tr>
-        <td>${i.produto_servico||''}</td><td class="text2">${i.quantidade}</td>
-        <td class="text2">${fmt(i.valor_unitario)}</td><td class="text2">${fmt(i.desconto)}</td>
+        <td>${i.produto_servico||''}</td><td class="text2">${i.descricao||''}</td><td class="text2">${i.quantidade}</td>
+        <td class="text2">${fmt(i.valor_unitario)}</td>
         <td style="color:var(--accent);font-weight:600">${fmt(i.valor_total)}</td></tr>`).join('')}</tbody>
     </table>
     <div style="text-align:right;padding-top:8px;margin-bottom:16px">
@@ -457,6 +457,7 @@ function abrirNovaOS(placa='',modelo='') {
   document.getElementById('os-tipo').value='Ordem de Serviço';
   document.getElementById('os-pagamento').value='';
   document.getElementById('os-status').value='ABERTA';
+  document.getElementById('os-desconto').value=0;
   document.getElementById('os-obs').value='';
   document.getElementById('itens-container').innerHTML='';
   document.getElementById('midias-form-preview').innerHTML='';
@@ -464,6 +465,7 @@ function abrirNovaOS(placa='',modelo='') {
   document.getElementById('modal-os').classList.add('open');
 }
 
+async function editarOSId(id){try{const d=await api('/os/'+id);if(d)editarOS(d);}catch(e){alert('Erro ao carregar OS');}}
 function editarOS(o) {
   state.editandoOsId=o.id; state.midiasNovas=[];
   document.getElementById('modal-os-title').textContent=`Editando OS #${o.numero}`;
@@ -477,6 +479,7 @@ function editarOS(o) {
   document.getElementById('os-pagamento').value=o.forma_pagamento||'';
   document.getElementById('os-status').value=o.status||'ABERTA';
   document.getElementById('os-obs').value=o.observacoes||'';
+  document.getElementById('os-desconto').value=o.desconto||0;
   document.getElementById('itens-container').innerHTML='';
   document.getElementById('midias-form-preview').innerHTML='';
   (o.itens||[]).forEach(i=>addItem(i));
@@ -493,9 +496,10 @@ function addItem(item={}) {
       <input class="item-ps" placeholder="Produto ou serviço" value="${item.produto_servico||''}" oninput="acProduto(this)">
       <div class="ac-list" style="display:none"></div>
     </div>
-    <input class="item-qt" type="number" min="0.01" step="0.01" value="${item.quantidade||1}" oninput="calcItem(this)">
-    <input class="item-vu" type="number" min="0" step="0.01" value="${item.valor_unitario||0}" oninput="calcItem(this)">
-    <input class="item-dc" type="number" min="0" step="0.01" value="${item.desconto||0}" oninput="calcItem(this)">
+    <input class="item-ds" placeholder="Descrição" value="${item.descricao||''}" style="min-width:0">
+    <input class="item-qt" type="number" min="1" step="1" value="${item.quantidade||1}" oninput="calcItem(this)">
+    <input class="item-vu" type="number" min="0" step="0.01" value="${item.valor_unitario||''}" oninput="calcItem(this)">
+    
     <input class="item-tt" type="number" readonly value="${item.valor_total||item.valor_total_item||0}" style="background:var(--bg);color:var(--accent);font-weight:600">
     <button class="btn btn-danger btn-sm" onclick="this.parentElement.remove();atualizarTotal()">✕</button>`;
   document.getElementById('itens-container').appendChild(div);
@@ -506,15 +510,15 @@ function calcItem(el) {
   const row=el.closest('.item-row');
   const qt=parseFloat(row.querySelector('.item-qt').value)||0;
   const vu=parseFloat(row.querySelector('.item-vu').value)||0;
-  const dc=parseFloat(row.querySelector('.item-dc').value)||0;
-  row.querySelector('.item-tt').value=Math.max(0,qt*vu-dc).toFixed(2);
+  const dc=0;
+  row.querySelector('.item-tt').value=Math.max(0,qt*vu).toFixed(2);
   atualizarTotal();
 }
 
 function atualizarTotal() {
   let t=0;
   document.querySelectorAll('.item-tt').forEach(el=>t+=parseFloat(el.value)||0);
-  document.getElementById('total-os').textContent='Total: '+fmt(t);
+  const dc=parseFloat(document.getElementById('os-desconto').value)||0;document.getElementById('total-os').textContent='Total: '+fmt(Math.max(0,t-dc));
 }
 
 async function salvarOS() {
@@ -524,10 +528,11 @@ async function salvarOS() {
   if(dr&&dr.includes('-')){const[y,m,d]=dr.split('-');data=`${d}/${m}/${y}`;}
   const itens=[...document.querySelectorAll('.item-row')].map(row=>({
     produto_servico:row.querySelector('.item-ps').value.trim(),
+    descricao:row.querySelector('.item-ds')?row.querySelector('.item-ds').value.trim():'',
     tipo_item:'Serviço',
     quantidade:parseFloat(row.querySelector('.item-qt').value)||1,
     valor_unitario:parseFloat(row.querySelector('.item-vu').value)||0,
-    desconto:parseFloat(row.querySelector('.item-dc').value)||0,
+    desconto:0,
     valor_total:parseFloat(row.querySelector('.item-tt').value)||0,
   })).filter(i=>i.produto_servico);
 
@@ -541,6 +546,7 @@ async function salvarOS() {
     tipo_negociacao:document.getElementById('os-tipo').value,
     forma_pagamento:document.getElementById('os-pagamento').value||null,
     status:document.getElementById('os-status').value,
+    desconto:parseFloat(document.getElementById('os-desconto').value)||0,
     observacoes:document.getElementById('os-obs').value.trim()||null,
   };
 
@@ -646,7 +652,7 @@ async function buscarPlaca(placa,modelo) {
         <td style="color:var(--accent);font-weight:600">${fmt(o.valor_liquido)}</td>
         <td class="text2">${o.forma_pagamento||'-'}</td>
         <td>${badge(o.status)}</td>
-        <td><button class="btn btn-ghost btn-sm" onclick="verOSId(${o.id})">Ver</button></td></tr>`).join('')}
+        <td><button class="btn btn-ghost btn-sm" onclick="verOSId(${o.id})">Ver</button><button class="btn btn-primary btn-sm" style="margin-left:4px" onclick="editarOSId(${o.id})">Editar</button></td></tr>`).join('')}
       </tbody></table></div>`;
 }
 
