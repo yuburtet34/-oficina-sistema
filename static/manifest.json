@@ -1,0 +1,13 @@
+{ 
+  "name": "Alta Performance Motorsport", 
+  "short_name": "Alta Performance", 
+  "description": "Sistema de Gestao de Oficina", 
+  "start_url": "/", 
+  "display": "standalone", 
+  "background_color": "#1a3a6b", 
+  "theme_color": "#1a3a6b", 
+  "orientation": "portrait", 
+  "icons": [ 
+    {"src": "/static/logo.b64", "sizes": "192x192", "type": "image/jpeg"} 
+  ] 
+} 
