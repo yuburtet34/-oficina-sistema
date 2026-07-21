@@ -29,6 +29,7 @@ import os as _os
 DB_PATH  = Path(_os.environ.get("DB_PATH", str(BASE_DIR / "db" / "oficina.db")))
 (BASE_DIR / "db").mkdir(parents=True, exist_ok=True)
 app      = FastAPI(title="Sistema Oficina")
+app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
 
 # ── Banco de dados ────────────────────────────────────────────
 @contextmanager

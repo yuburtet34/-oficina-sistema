@@ -214,6 +214,8 @@ function carregarOS(os) {
 
 // Carrega dados passados pelo sistema principal
 window.addEventListener('message', e => { if(e.data?.tipo==='os') carregarOS(e.data.os); });
+var sp=sessionStorage.getItem('os_print');if(sp){carregarOS(JSON.parse(sp));sessionStorage.removeItem('os_print');}
+var sp=sessionStorage.getItem('os_print');if(sp){carregarOS(JSON.parse(sp));sessionStorage.removeItem('os_print');}
 const params = new URLSearchParams(location.search);
 var osId=location.search.split('os_id=')[1];
 if (osId) {

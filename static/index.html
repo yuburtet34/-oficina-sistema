@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="Alta Performance"><meta name="theme-color" content="#1a3a6b"><link rel="manifest" href="/static/manifest.json"><meta charset="UTF-8">
+<meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="Alta Performance"><meta name="theme-color" content="#1a3a6b"><link rel="manifest" href="/static/manifest.json"><meta name="version" content="v2"><meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sistema Oficina</title>
 <style>
@@ -367,8 +367,6 @@ async function renderOS() {
 
 let osTimer;
 function filtrarOS(v){clearTimeout(osTimer);state.osBusca=v;state.osPage=0;osTimer=setTimeout(carregarOS,300);}
-function filtrarOSStatus(v){state.osStatus=v;state.osPage=0;carregarOS();}
-function pgOS(dir){const n=state.osPage+dir;if(n<0||n*PG>=state.osTotal)return;state.osPage=n;carregarOS();}
 
 async function carregarOS() {
   const p=new URLSearchParams(Object.assign({busca:state.osBusca,status:state.osStatus,limit:PG,offset:state.osPage*PG},(function(){var pp=typeof getPeriodoDatas==='function'?getPeriodoDatas():{};return Object.fromEntries(Object.entries(pp).filter(function(e){return e[1]!=='';}))}())));
@@ -437,7 +435,8 @@ async function verOSId(id) {
     <button class="btn btn-look" onclick="LOOK_PLACEHOLDER(${o.id})">👁️ LOOK</button>
     ${o.telefone_cliente?`<button class="btn btn-whats" onclick="enviarWhatsApp(${o.id})">📱 WhatsApp</button>`:''}
     ${o.email_cliente?`<button class="btn btn-blue" onclick="enviarEmail(${o.id})">📧 Email</button>`:''}
-    <button class="btn btn-primary" onclick="fecharModal('modal-detalhe');editarOS(o)">✏️ Editar</button>`;
+    <button class="btn btn-primary" onclick="fecharModal('modal-detalhe');editarOS(o)">✏️ Editar</button>
+    <button class="btn btn-ghost" onclick="imprimirOS(${o.id})">🖨 Imprimir</button>`;
 
   // Guarda referência para editar
   document.querySelector('#detalhe-foot .btn-primary').onclick = () => { fecharModal('modal-detalhe'); editarOS(o); };
@@ -919,15 +918,7 @@ function selecionarPeriodo(tipo, label) {
   atualizarCardsOS();
 }
 function mudarMes(dir) { state.osPage = 0; carregarOS(); }
-function filtrarOSStatus(v) {
-  state.osStatus = v;
-  state.osPage = 0;
-  document.querySelectorAll('.card-status').forEach(b => b.classList.remove('ativo'));
-  var ids = {'':'card-todos','ABERTA':'card-aberta','FECHADA':'card-fechada','CANCELADA':'card-cancelada'};
-  var el = document.getElementById(ids[v] || 'card-todos');
-  if (el) el.classList.add('ativo');
-  carregarOS();
-}
+
 async function atualizarCardsOS() {
   try {
     var pp=typeof getPeriodoDatas==='function'?getPeriodoDatas():{};var ppf=Object.fromEntries(Object.entries(pp).filter(function(e){return e[1]!==''}));var ps=new URLSearchParams(Object.assign({limit:9999,offset:0},ppf));var d=await api('/os?'+ps);
@@ -1025,6 +1016,7 @@ function togglePeriodo() {
   }
   d.style.display = 'block';
 }
+async function imprimirOS(id){try{const o=await api('/os/'+id);sessionStorage.setItem('os_print',JSON.stringify(o));window.location.href='/static/print.html?from=app';}catch(e){alert('Erro ao imprimir');}}
 </script>
 <div id="login-overlay" style="display:none;position:fixed;inset:0;background:#1a3a6b;z-index:9999;align-items:center;justify-content:center">
 <div style="background:#fff;border-radius:16px;padding:40px;width:360px;box-shadow:0 20px 60px rgba(0,0,0,.3)">
