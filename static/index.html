@@ -173,7 +173,13 @@
           <label>Forma de Pagamento</label>
           <select id="os-pagamento">
             <option value="">-- Selecionar --</option>
-            <option>DINHEIRO</option><option>PIX</option><option>CARTAO</option>
+            <option>DINHEIRO</option><option>PIX</option><option>DEBITO</option><option>CREDITO</option><option>OUTRAS</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Parcelamento</label>
+          <select id="os-parcelamento">
+            <option value="">-- Sem parcelamento --</option><option>2X</option><option>3X</option><option>4X</option><option>5X</option><option>6X</option><option>7X</option><option>8X</option><option>9X</option><option>10X</option><option>11X</option><option>12X</option>
           </select>
         </div>
         <div class="form-group">
@@ -456,6 +462,7 @@ function abrirNovaOS(placa='',modelo='') {
   document.getElementById('os-tipo').value='Ordem de Serviço';
   document.getElementById('os-pagamento').value='';
   document.getElementById('os-status').value='ABERTA';
+  document.getElementById('os-parcelamento').value='';
   document.getElementById('os-desconto').value=0;
   document.getElementById('os-obs').value='';
   document.getElementById('itens-container').innerHTML='';
@@ -477,6 +484,7 @@ function editarOS(o) {
   document.getElementById('os-tipo').value=o.tipo_negociacao||'Ordem de Serviço';
   document.getElementById('os-pagamento').value=o.forma_pagamento||'';
   document.getElementById('os-status').value=o.status||'ABERTA';
+  document.getElementById('os-parcelamento').value=o.parcelamento||'';
   document.getElementById('os-obs').value=o.observacoes||'';
   document.getElementById('os-desconto').value=o.desconto||0;
   document.getElementById('itens-container').innerHTML='';
@@ -545,6 +553,7 @@ async function salvarOS() {
     tipo_negociacao:document.getElementById('os-tipo').value,
     forma_pagamento:document.getElementById('os-pagamento').value||null,
     status:document.getElementById('os-status').value,
+    parcelamento:document.getElementById('os-parcelamento').value||null,
     desconto:parseFloat(document.getElementById('os-desconto').value)||0,
     observacoes:document.getElementById('os-obs').value.trim()||null,
   };
@@ -688,7 +697,7 @@ async function renderProdutos() {
     <div class="page-title">📦 Produtos / Estoque</div>
     <div class="table-wrap">
       <div class="table-header"><input class="search-input" placeholder="🔍 Nome ou código..." oninput="buscarProdutos(this.value)"></div>
-      <table><thead><tr><th>Código</th><th>Nome</th><th>Valor Venda</th><th>Estoque</th><th>Situação</th></tr></thead>
+      <table><thead><tr><th>Código</th><th>Nome</th><th>Valor Venda</th><th>Estoque</th><th>Situação</th><th></th></tr></thead>
       <tbody id="produtos-tbody"><tr><td colspan="5" style="text-align:center;padding:30px;color:var(--text2)">Carregando...</td></tr></tbody></table></div>`;
   buscarProdutos('');
 }
@@ -706,7 +715,7 @@ async function buscarProdutos(v) {
         <td><strong>${p.nome}</strong></td>
         <td style="color:var(--accent)">${fmt(p.valor_venda)}</td>
         <td style="font-weight:600;color:${baixo?'var(--red)':'var(--text)'}">${qt}</td>
-        <td>${baixo?'<span class="badge" style="background:rgba(231,76,60,.15);color:var(--red)">⚠️ BAIXO</span>':'<span class="badge" style="background:rgba(46,204,113,.12);color:var(--green)">OK</span>'}</td></tr>`;
+        <td>${baixo?'<span class="badge" style="background:rgba(231,76,60,.15);color:var(--red)">⚠️ BAIXO</span>':'<span class="badge" style="background:rgba(46,204,113,.12);color:var(--green)">OK</span>'}</td><td><button onclick="editarProduto(${p.id})" style="padding:4px 10px;border-radius:5px;border:1.5px solid #2563eb;background:#fff;color:#2563eb;font-size:11px;cursor:pointer;margin-right:4px">Editar</button><button onclick="excluirProduto(${p.id},${p.nome})" style="padding:4px 10px;border-radius:5px;border:1.5px solid #dc2626;background:#fff;color:#dc2626;font-size:11px;cursor:pointer">Excluir</button></td></tr>`;
     }).join('')||'<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--text2)">Nenhum produto encontrado</td></tr>';
   },200);
 }
@@ -1017,6 +1026,10 @@ function togglePeriodo() {
   d.style.display = 'block';
 }
 async function imprimirOS(id){try{const o=await api('/os/'+id);sessionStorage.setItem('os_print',JSON.stringify(o));window.location.href='/static/print.html?from=app';}catch(e){alert('Erro ao imprimir');}}
+function filtrarOSStatus(v){state.osStatus=v;state.osPage=0;document.querySelectorAll('.card-status').forEach(b=>b.classList.remove('ativo'));var ids={'':'card-todos','ABERTA':'card-aberta','FECHADA':'card-fechada','CANCELADA':'card-cancelada'};var el=document.getElementById(ids[v]||'card-todos');if(el)el.classList.add('ativo');carregarOS();atualizarCardsOS();}
+async function excluirProduto(id,nome){if(!confirm('Excluir produto: '+nome+'?'))return;try{await api('/produtos/'+id,{method:'DELETE'});buscarProdutos(document.querySelector('.search-input')?document.querySelector('.search-input').value:'');}catch(e){alert('Erro ao excluir produto');}}
+async function editarProduto(id){try{const p=await api('/produtos/'+id);document.getElementById('prod-id').value=p.id;document.getElementById('prod-codigo').value=p.codigo||'';document.getElementById('prod-nome').value=p.nome||'';document.getElementById('prod-valor').value=p.valor_venda||0;document.getElementById('prod-estoque').value=p.qt_estoque||0;document.getElementById('prod-minimo').value=p.qt_minima||0;document.getElementById('modal-produto').classList.add('open');}catch(e){alert('Erro ao carregar produto');}}
+async function salvarProduto(){var id=document.getElementById('prod-id').value;var body={codigo:document.getElementById('prod-codigo').value.trim(),nome:document.getElementById('prod-nome').value.trim(),valor_venda:parseFloat(document.getElementById('prod-valor').value)||0,qt_estoque:parseFloat(document.getElementById('prod-estoque').value)||0,qt_minima:parseFloat(document.getElementById('prod-minimo').value)||0};try{await api('/produtos/'+id,{method:'PUT',body:body});fecharModal('modal-produto');buscarProdutos('');}catch(e){alert('Erro ao salvar produto');}}
 </script>
 <div id="login-overlay" style="display:none;position:fixed;inset:0;background:#1a3a6b;z-index:9999;align-items:center;justify-content:center">
 <div style="background:#fff;border-radius:16px;padding:40px;width:360px;box-shadow:0 20px 60px rgba(0,0,0,.3)">
@@ -1026,5 +1039,40 @@ async function imprimirOS(id){try{const o=await api('/os/'+id);sessionStorage.se
 <div id="lin-e" style="display:none;color:#dc2626;font-size:12px;margin-bottom:8px"></div>
 <button id="lin-btn" style="width:100%;padding:12px;background:#2563eb;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer">Entrar</button>
 </div></div>
+<div class="modal-overlay" id="modal-produto">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-head">
+      <div class="modal-title">Editar Produto</div>
+      <button class="close-btn" onclick="fecharModal('modal-produto')">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="prod-id">
+      <div class="form-group">
+        <label>Código</label>
+        <input id="prod-codigo" placeholder="Código do produto">
+      </div>
+      <div class="form-group">
+        <label>Nome</label>
+        <input id="prod-nome" placeholder="Nome do produto">
+      </div>
+      <div class="form-group">
+        <label>Valor de Venda (R$)</label>
+        <input id="prod-valor" type="number" min="0" step="0.01" placeholder="0,00">
+      </div>
+      <div class="form-group">
+        <label>Estoque Atual</label>
+        <input id="prod-estoque" type="number" min="0" step="1" placeholder="0">
+      </div>
+      <div class="form-group">
+        <label>Estoque Mínimo</label>
+        <input id="prod-minimo" type="number" min="0" step="1" placeholder="0">
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="fecharModal('modal-produto')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarProduto()">💾 Salvar</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>

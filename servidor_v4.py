@@ -298,7 +298,7 @@ def dashboard():
         hoje = datetime.now().strftime("%Y-%m-%d")
         mes  = datetime.now().strftime("%Y-%m")
         return {
-            "os_abertas":    db.execute("SELECT COUNT(*) FROM ordens_servico WHERE status='ABERTA'").fetchone()[0],
+            "os_abertas":    db.execute("SELECT COUNT(*) FROM ordens_servico WHERE status='ABERTA' AND (strftime('%Y-%m',substr(data,7,4)||'-'||substr(data,4,2)||'-'||substr(data,1,2))=? OR strftime('%Y-%m',data)=?)", (mes,mes)).fetchone()[0],
             "os_hoje":       db.execute("SELECT COUNT(*) FROM ordens_servico WHERE data=?", (hoje,)).fetchone()[0],
             "faturamento_mes": db.execute("SELECT COALESCE(SUM(valor_liquido),0) FROM ordens_servico WHERE strftime('%Y-%m',data)=? AND status='FECHADA'", (mes,)).fetchone()[0],
             "total_clientes":  db.execute("SELECT COUNT(*) FROM clientes").fetchone()[0],
@@ -511,6 +511,35 @@ def listar_produtos(busca: str = "", limit: int = 50):
         return [dict(r) for r in rows]
 
 # ── Frontend ──────────────────────────────────────────────────
+
+@app.get("/api/produtos/{produto_id}")
+def get_produto(produto_id: int):
+    with get_db() as db:
+        row = db.execute("SELECT * FROM produtos WHERE id=?", (produto_id,)).fetchone()
+        if not row:
+            from fastapi import HTTPException
+            raise HTTPException(status_code=404, detail="Produto não encontrado")
+        return dict(row)
+
+@app.put("/api/produtos/{produto_id}")
+async def atualizar_produto(produto_id: int, req: Request):
+    body = await req.json()
+    with get_db() as db:
+        db.execute("""UPDATE produtos SET
+            codigo=?, nome=?, valor_venda=?, qt_estoque=?, qt_minima=?
+            WHERE id=?""",
+            (body.get('codigo'), body.get('nome'), body.get('valor_venda',0),
+             body.get('qt_estoque',0), body.get('qt_minima',0), produto_id))
+        db.commit()
+    return {"ok": True}
+
+@app.delete("/api/produtos/{produto_id}")
+def deletar_produto(produto_id: int):
+    with get_db() as db:
+        db.execute("DELETE FROM produtos WHERE id=?", (produto_id,))
+        db.commit()
+    return {"ok": True}
+
 # endpoints de login 
 @app.post("/api/login") 
 async def login(req: Request): 
@@ -574,5 +603,34 @@ if __name__ == "__main__":
 ║  Para parar: pressione CTRL+C                    ║
 ╚══════════════════════════════════════════════════╝
 """)
-    uvicorn.run(app, host="0.0.0.0", port=8000, log_level="warning")# endpoints de login 
+    uvicorn.run(app, host="0.0.0.0", port=8000, log_level="warning")
+@app.get("/api/produtos/{produto_id}")
+def get_produto(produto_id: int):
+    with get_db() as db:
+        row = db.execute("SELECT * FROM produtos WHERE id=?", (produto_id,)).fetchone()
+        if not row:
+            from fastapi import HTTPException
+            raise HTTPException(status_code=404, detail="Produto não encontrado")
+        return dict(row)
+
+@app.put("/api/produtos/{produto_id}")
+async def atualizar_produto(produto_id: int, req: Request):
+    body = await req.json()
+    with get_db() as db:
+        db.execute("""UPDATE produtos SET
+            codigo=?, nome=?, valor_venda=?, qt_estoque=?, qt_minima=?
+            WHERE id=?""",
+            (body.get('codigo'), body.get('nome'), body.get('valor_venda',0),
+             body.get('qt_estoque',0), body.get('qt_minima',0), produto_id))
+        db.commit()
+    return {"ok": True}
+
+@app.delete("/api/produtos/{produto_id}")
+def deletar_produto(produto_id: int):
+    with get_db() as db:
+        db.execute("DELETE FROM produtos WHERE id=?", (produto_id,))
+        db.commit()
+    return {"ok": True}
+
+# endpoints de login 
 
