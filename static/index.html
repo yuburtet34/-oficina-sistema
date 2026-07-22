@@ -325,12 +325,12 @@ async function renderDashboard() {
     </div>
     <div class="table-wrap">
       <div class="table-header"><div class="table-title">🕐 OS Recentes</div><button class="btn btn-primary btn-sm" onclick="abrirNovaOS()">+ Nova OS</button></div>
-      <table><thead><tr><th>Nº</th><th>Data</th><th>Veículo</th><th>Cliente</th><th>Valor</th><th>Status</th></tr></thead>
+      <table><thead><tr><th>Nº</th><th>Data</th><th>Placa</th><th>Modelo</th><th>Valor</th><th>Status</th></tr></thead>
       <tbody>${d.os_recentes.map(o=>`<tr>
         <td><span class="link" onclick="verOSId(${o.id})">#${o.numero}</span></td>
         <td class="text2">${o.data||''}</td>
-        <td><strong class="mono">${o.veiculo_placa||''}</strong><br><span class="text2" style="font-size:12px">${o.veiculo_modelo||''}</span></td>
-        <td>${o.cliente_nome||''}</td>
+        <td><strong class="mono">${o.veiculo_placa||''}</strong></td>
+        <td>${o.veiculo_modelo||''}</td>
         <td style="color:var(--accent);font-weight:600">${fmt(o.valor_liquido)}</td>
         <td>${badge(o.status)}</td></tr>`).join('')}</tbody></table></div>`;
 }
@@ -362,8 +362,8 @@ async function renderOS() {
 </div>
         <button class="btn btn-primary" onclick="abrirNovaOS()">+ Nova OS</button>
       </div>
-      <table><thead><tr><th>Nº</th><th>Data</th><th>Veículo</th><th>Cliente</th><th>Valor</th><th>Pagamento</th><th>Status</th><th></th></tr></thead>
-      <tbody id="os-tbody"><tr><td colspan="8" style="text-align:center;padding:30px;color:var(--text2)">Carregando...</td></tr></tbody></table>
+      <table><thead><tr><th>Nº</th><th>Data</th><th>Placa</th><th>Modelo</th><th>Valor</th><th>Status</th><th></th></tr></thead>
+      <tbody id="os-tbody"><tr><td colspan="7" style="text-align:center;padding:30px;color:var(--text2)">Carregando...</td></tr></tbody></table>
       <div class="pagination"><span class="page-info" id="os-info"></span>
         <button class="btn btn-ghost btn-sm" id="btn-prev" onclick="pgOS(-1)">← Anterior</button>
         <button class="btn btn-ghost btn-sm" id="btn-next" onclick="pgOS(1)">Próxima →</button>
@@ -383,13 +383,13 @@ async function carregarOS() {
   tbody.innerHTML=d.items.length?d.items.map(o=>`<tr>
     <td><span class="link" onclick="verOSId(${o.id})">#${o.numero}</span></td>
     <td class="text2">${o.data||''}</td>
-    <td><strong class="mono">${o.veiculo_placa||''}</strong><br><span class="text2" style="font-size:12px">${o.veiculo_modelo||''}</span></td>
-    <td>${o.cliente_nome||''}</td>
+    <td><strong class="mono">${o.veiculo_placa||''}</strong></td>
+    <td>${o.veiculo_modelo||''}</td>
     <td style="color:var(--accent);font-weight:600">${fmt(o.valor_liquido)}</td>
     <td class="text2">${o.forma_pagamento||'-'}</td>
     <td>${badge(o.status)}</td>
     <td><button class="btn btn-ghost btn-sm" onclick="verOSId(${o.id})">Ver</button><button class="btn btn-primary btn-sm" style="margin-left:4px" onclick="editarOSId(${o.id})">Editar</button></td></tr>`).join('')
-    :'<tr><td colspan="8" style="text-align:center;padding:30px;color:var(--text2)">Nenhuma OS encontrada</td></tr>';
+    :'<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--text2)">Nenhuma OS encontrada</td></tr>';
   const ini=state.osPage*PG+1,fim=Math.min((state.osPage+1)*PG,d.total);
   const info=document.getElementById('os-info');if(info)info.textContent=`${ini}–${fim} de ${d.total}`;
   const prev=document.getElementById('btn-prev'),next=document.getElementById('btn-next');
