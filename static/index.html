@@ -111,6 +111,7 @@
       <div class="nav-item" onclick="navTo('veiculo')"><span class="nav-icon">🚗</span> Buscar Veículo</div>
       <div class="nav-item" onclick="navTo('clientes')"><span class="nav-icon">👥</span> Clientes</div>
       <div class="nav-item" onclick="navTo('produtos')"><span class="nav-icon">📦</span> Produtos / Estoque</div>
+      <div class="nav-item" id="nav-usuarios" onclick="navTo('usuarios')"><span class="nav-icon">👤</span> Usuários</div>
     </nav><div style="padding:12px 20px;border-top:1px solid rgba(255,255,255,.15)"><button onclick="fazerLogout()" style="width:100%;padding:8px;border-radius:6px;background:#dc2626;color:#fff;border:none;font-size:13px;font-weight:600;cursor:pointer">Sair</button></div>
   </div>
   <div id="main">
@@ -119,6 +120,7 @@
     <div id="page-veiculo" style="display:none"></div>
     <div id="page-clientes" style="display:none"></div>
     <div id="page-produtos" style="display:none"></div>
+    <div id="page-usuarios" style="display:none"></div>
   </div>
 </div>
 
@@ -296,7 +298,7 @@ function navTo(page) {
   document.querySelectorAll('[id^="page-"]').forEach(el => el.style.display='none');
   document.getElementById(`page-${page}`).style.display='';
   state.page=page;
-  ({dashboard:renderDashboard,os:renderOS,veiculo:renderVeiculo,clientes:renderClientes,produtos:renderProdutos})[page]?.();
+  ({dashboard:renderDashboard,os:renderOS,veiculo:renderVeiculo,clientes:renderClientes,produtos:renderProdutos,usuarios:renderUsuarios})[page]?.();
 }
 
 async function api(path,opts={}) {
@@ -929,7 +931,15 @@ async function fazerLogin() {
   e.style.display = 'none';
   if (!u || !s) { e.textContent = 'Preencha usuario e senha'; e.style.display = 'block'; return; }
   var r = await fetch('/api/login', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({usuario:u, senha:s})});
-  if (r.ok) { esconderLogin(); renderDashboard(); }
+  if (r.ok) {
+    var me = await fetch('/api/me');
+    var meData = await me.json();
+    window.userPerfil = meData.perfil || 'funcionario';
+    window.userName = meData.nome || meData.usuario || '';
+    esconderLogin();
+    aplicarPermissoes();
+    renderDashboard();
+  }
   else { e.textContent = 'Usuario ou senha incorretos'; e.style.display = 'block'; }
 }
 async function fazerLogout() {
@@ -938,7 +948,15 @@ async function fazerLogout() {
 }
 async function verificarLogin() {
   var r = await fetch('/api/me');
-  if (r.ok) { esconderLogin(); renderDashboard(); }
+  if (r.ok) {
+    var me = await fetch('/api/me');
+    var meData = await me.json();
+    window.userPerfil = meData.perfil || 'funcionario';
+    window.userName = meData.nome || meData.usuario || '';
+    esconderLogin();
+    aplicarPermissoes();
+    renderDashboard();
+  }
   else { mostrarLogin(); }
 }
 function togglePeriodo() {
@@ -1077,6 +1095,19 @@ function irPagProd(){
   var el=document.querySelector('#page-produtos .search-input');
   buscarProdutos(el?el.value:'');
 }
+function aplicarPermissoes() {
+  var isAdmin = window.userPerfil === 'admin';
+  var navUsuarios = document.getElementById('nav-usuarios');
+  if (navUsuarios) navUsuarios.style.display = isAdmin ? 'flex' : 'none';
+}
+function checkAdmin() {
+  if (window.userPerfil !== 'admin') {
+    alert('Acesso restrito a administradores');
+    navTo('dashboard');
+    return false;
+  }
+  return true;
+}
 function novoProduto() {
   document.getElementById('prod-id').value = '';
   document.getElementById('prod-codigo').value = '';
@@ -1127,6 +1158,76 @@ async function excluirSelecionados() {
   } catch(e) { alert('Erro ao excluir produtos'); }
 }
 
+
+async function renderUsuarios() {
+  if (!checkAdmin()) return;
+  var el = document.getElementById('page-usuarios');
+  el.innerHTML = '<div class="page-title">👤 Usuários</div><div style="color:var(--text2)">Carregando...</div>';
+  var d = await api('/usuarios');
+  el.innerHTML = `
+    <div class="page-title">👤 Usuários</div>
+    <div class="table-wrap">
+      <div class="table-header">
+        <div class="table-title">Gerenciar Usuários</div>
+        <button onclick="novoUsuario()" class="btn btn-primary">+ Novo Usuário</button>
+      </div>
+      <table><thead><tr><th>Login</th><th>Nome</th><th>Perfil</th><th>Status</th><th></th></tr></thead>
+      <tbody>${d.map(u=>`<tr>
+        <td><strong>${u.usuario}</strong></td>
+        <td>${u.nome||''}</td>
+        <td><span style="padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;background:${u.perfil==='admin'?'#dbeafe':'#dcfce7'};color:${u.perfil==='admin'?'#1d4ed8':'#15803d'}">${u.perfil==='admin'?'Admin':'Funcionário'}</span></td>
+        <td><span style="padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;background:${u.ativo?'#dcfce7':'#fee2e2'};color:${u.ativo?'#15803d':'#dc2626'}">${u.ativo?'Ativo':'Inativo'}</span></td>
+        <td><button onclick="editarUsuario(${u.id})" style="padding:4px 10px;border-radius:5px;border:1.5px solid #2563eb;background:#fff;color:#2563eb;font-size:11px;cursor:pointer">Editar</button></td>
+      </tr>`).join('')}</tbody></table>
+    </div>`;
+}
+
+function novoUsuario() {
+  document.getElementById('usu-id').value = '';
+  document.getElementById('usu-login').value = '';
+  document.getElementById('usu-nome').value = '';
+  document.getElementById('usu-perfil').value = 'funcionario';
+  document.getElementById('usu-senha').value = '';
+  document.getElementById('usu-ativo').value = '1';
+  document.querySelector('#modal-usuario .modal-title').textContent = 'Novo Usuário';
+  document.getElementById('modal-usuario').classList.add('open');
+}
+
+async function editarUsuario(id) {
+  var d = await api('/usuarios/' + id);
+  document.getElementById('usu-id').value = d.id;
+  document.getElementById('usu-login').value = d.usuario;
+  document.getElementById('usu-nome').value = d.nome || '';
+  document.getElementById('usu-perfil').value = d.perfil || 'funcionario';
+  document.getElementById('usu-senha').value = '';
+  document.getElementById('usu-ativo').value = d.ativo ? '1' : '0';
+  document.querySelector('#modal-usuario .modal-title').textContent = 'Editar Usuário';
+  document.getElementById('modal-usuario').classList.add('open');
+}
+
+async function salvarUsuario() {
+  var id = document.getElementById('usu-id').value;
+  var body = {
+    usuario: document.getElementById('usu-login').value.trim(),
+    nome: document.getElementById('usu-nome').value.trim(),
+    perfil: document.getElementById('usu-perfil').value,
+    ativo: document.getElementById('usu-ativo').value === '1'
+  };
+  var senha = document.getElementById('usu-senha').value;
+  if (senha) body.senha = senha;
+  if (!body.usuario) { alert('Login obrigatório'); return; }
+  try {
+    if (id) {
+      await api('/usuarios/' + id, {method: 'PUT', body: body});
+    } else {
+      if (!senha) { alert('Senha obrigatória para novo usuário'); return; }
+      await api('/usuarios', {method: 'POST', body: body});
+    }
+    fecharModal('modal-usuario');
+    renderUsuarios();
+  } catch(e) { alert('Erro ao salvar usuário'); }
+}
+
 </script>
 <div id="login-overlay" style="display:none;position:fixed;inset:0;background:#1a3a6b;z-index:9999;align-items:center;justify-content:center">
 <div style="background:#fff;border-radius:16px;padding:40px;width:360px;box-shadow:0 20px 60px rgba(0,0,0,.3)">
@@ -1168,6 +1269,47 @@ async function excluirSelecionados() {
     <div class="modal-foot">
       <button class="btn btn-ghost" onclick="fecharModal('modal-produto')">Cancelar</button>
       <button class="btn btn-primary" onclick="salvarProduto()">💾 Salvar</button>
+    </div>
+  </div>
+</div>
+<div class="modal-overlay" id="modal-usuario">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-head">
+      <div class="modal-title">Usuário</div>
+      <button class="close-btn" onclick="fecharModal('modal-usuario')">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="usu-id">
+      <div class="form-group">
+        <label>Login</label>
+        <input id="usu-login" placeholder="Login do usuário">
+      </div>
+      <div class="form-group">
+        <label>Nome</label>
+        <input id="usu-nome" placeholder="Nome completo">
+      </div>
+      <div class="form-group">
+        <label>Senha (deixe em branco para manter)</label>
+        <input id="usu-senha" type="password" placeholder="Nova senha">
+      </div>
+      <div class="form-group">
+        <label>Perfil</label>
+        <select id="usu-perfil">
+          <option value="admin">Administrador</option>
+          <option value="funcionario">Funcionário</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Status</label>
+        <select id="usu-ativo">
+          <option value="1">Ativo</option>
+          <option value="0">Inativo</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="fecharModal('modal-usuario')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarUsuario()">💾 Salvar</button>
     </div>
   </div>
 </div>

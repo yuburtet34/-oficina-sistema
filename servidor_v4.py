@@ -555,6 +555,43 @@ def deletar_produto(produto_id: int):
         db.commit()
     return {"ok": True}
 
+
+@app.get("/api/usuarios/{usuario_id}")
+def get_usuario(usuario_id: int):
+    with get_db() as db:
+        row = db.execute("SELECT id,usuario,nome,perfil,ativo FROM usuarios WHERE id=?", (usuario_id,)).fetchone()
+        if not row:
+            from fastapi import HTTPException
+            raise HTTPException(status_code=404, detail="Usuário não encontrado")
+        return dict(row)
+
+@app.post("/api/usuarios")
+async def criar_usuario(req: Request):
+    body = await req.json()
+    senha = body.get('senha','')
+    senha_hash = hashlib.sha256(senha.encode()).hexdigest()
+    with get_db() as db:
+        db.execute("INSERT INTO usuarios (usuario,senha_hash,nome,perfil,ativo) VALUES (?,?,?,?,?)",
+            (body.get('usuario'), senha_hash, body.get('nome'), body.get('perfil','funcionario'), 1 if body.get('ativo') else 0))
+        db.commit()
+    return {"ok": True}
+
+@app.put("/api/usuarios/{usuario_id}")
+async def atualizar_usuario(usuario_id: int, req: Request):
+    body = await req.json()
+    with get_db() as db:
+        if body.get('senha'):
+            senha_hash = hashlib.sha256(body['senha'].encode()).hexdigest()
+            db.execute("UPDATE usuarios SET usuario=?,nome=?,perfil=?,ativo=?,senha_hash=? WHERE id=?",
+                (body.get('usuario'), body.get('nome'), body.get('perfil','funcionario'),
+                 1 if body.get('ativo') else 0, senha_hash, usuario_id))
+        else:
+            db.execute("UPDATE usuarios SET usuario=?,nome=?,perfil=?,ativo=? WHERE id=?",
+                (body.get('usuario'), body.get('nome'), body.get('perfil','funcionario'),
+                 1 if body.get('ativo') else 0, usuario_id))
+        db.commit()
+    return {"ok": True}
+
 # endpoints de login 
 @app.post("/api/login") 
 async def login(req: Request): 
@@ -657,6 +694,43 @@ async def atualizar_produto(produto_id: int, req: Request):
 def deletar_produto(produto_id: int):
     with get_db() as db:
         db.execute("DELETE FROM produtos WHERE id=?", (produto_id,))
+        db.commit()
+    return {"ok": True}
+
+
+@app.get("/api/usuarios/{usuario_id}")
+def get_usuario(usuario_id: int):
+    with get_db() as db:
+        row = db.execute("SELECT id,usuario,nome,perfil,ativo FROM usuarios WHERE id=?", (usuario_id,)).fetchone()
+        if not row:
+            from fastapi import HTTPException
+            raise HTTPException(status_code=404, detail="Usuário não encontrado")
+        return dict(row)
+
+@app.post("/api/usuarios")
+async def criar_usuario(req: Request):
+    body = await req.json()
+    senha = body.get('senha','')
+    senha_hash = hashlib.sha256(senha.encode()).hexdigest()
+    with get_db() as db:
+        db.execute("INSERT INTO usuarios (usuario,senha_hash,nome,perfil,ativo) VALUES (?,?,?,?,?)",
+            (body.get('usuario'), senha_hash, body.get('nome'), body.get('perfil','funcionario'), 1 if body.get('ativo') else 0))
+        db.commit()
+    return {"ok": True}
+
+@app.put("/api/usuarios/{usuario_id}")
+async def atualizar_usuario(usuario_id: int, req: Request):
+    body = await req.json()
+    with get_db() as db:
+        if body.get('senha'):
+            senha_hash = hashlib.sha256(body['senha'].encode()).hexdigest()
+            db.execute("UPDATE usuarios SET usuario=?,nome=?,perfil=?,ativo=?,senha_hash=? WHERE id=?",
+                (body.get('usuario'), body.get('nome'), body.get('perfil','funcionario'),
+                 1 if body.get('ativo') else 0, senha_hash, usuario_id))
+        else:
+            db.execute("UPDATE usuarios SET usuario=?,nome=?,perfil=?,ativo=? WHERE id=?",
+                (body.get('usuario'), body.get('nome'), body.get('perfil','funcionario'),
+                 1 if body.get('ativo') else 0, usuario_id))
         db.commit()
     return {"ok": True}
 
