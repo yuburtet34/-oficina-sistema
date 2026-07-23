@@ -715,7 +715,6 @@ var prodPage=0;
 var prodLimit=50;
 async function buscarProdutos(v) {
   clearTimeout(prodTimer);
-  prodPage=0;
     prodTimer=setTimeout(async()=>{
     const d=await api(`/produtos?busca=${encodeURIComponent(v)}&limit=${prodLimit}&offset=${prodPage*prodLimit}`);
     var total=d.total||d.length;
@@ -723,9 +722,9 @@ async function buscarProdutos(v) {
     var pag=document.getElementById('prod-paginacao');
     if(pag){
       var btns='<span style="font-size:12px;color:#4a5568">'+((prodPage*prodLimit)+1)+'-'+Math.min((prodPage+1)*prodLimit,total)+' de '+total+'</span> ';
-      if(prodPage>0)btns+='<button onclick="prodPage--;buscarProdutos(document.querySelector(\'.search-input\').value)" style="padding:4px 10px;border-radius:5px;border:1.5px solid #cbd5e0;background:#fff;cursor:pointer;font-size:12px">← Ant</button> ';
-      for(var i=0;i<Math.min(pages,10);i++){btns+='<button onclick="prodPage='+i+';buscarProdutos(document.querySelector(\'.search-input\').value)" style="padding:4px 8px;border-radius:5px;border:1.5px solid '+(i==prodPage?'#2563eb;background:#2563eb;color:#fff':'#cbd5e0;background:#fff')+'  ;cursor:pointer;font-size:12px;margin:0 2px">'+(i+1)+'</button> ';}
-      if(prodPage<pages-1)btns+='<button onclick="prodPage++;buscarProdutos(document.querySelector(\'.search-input\').value)" style="padding:4px 10px;border-radius:5px;border:1.5px solid #cbd5e0;background:#fff;cursor:pointer;font-size:12px">Prox →</button>';
+      if(prodPage>0)btns+='<button onclick="prodPage--;irPagProd()" style="padding:4px 10px;border-radius:5px;border:1.5px solid #cbd5e0;background:#fff;cursor:pointer;font-size:12px">← Ant</button> ';
+      for(var i=0;i<Math.min(pages,10);i++){btns+='<button onclick="prodPage='+i+';irPagProd()" style="padding:4px 8px;border-radius:5px;border:1.5px solid '+(i==prodPage?'#2563eb;background:#2563eb;color:#fff':'#cbd5e0;background:#fff')+'  ;cursor:pointer;font-size:12px;margin:0 2px">'+(i+1)+'</button> ';}
+      if(prodPage<pages-1)btns+='<button onclick="prodPage++;irPagProd()" style="padding:4px 10px;border-radius:5px;border:1.5px solid #cbd5e0;background:#fff;cursor:pointer;font-size:12px">Prox →</button>';
       pag.innerHTML=btns;
     }
     const tbody=document.getElementById('produtos-tbody');if(!tbody)return;
@@ -1073,6 +1072,10 @@ function novoProdutoOS(inputRef) {
   var row = inputRef ? inputRef.closest('.item-row') : null;
   window._acRow = row;
   document.getElementById('modal-produto').classList.add('open');
+}
+function irPagProd(){
+  var el=document.querySelector('#page-produtos .search-input');
+  buscarProdutos(el?el.value:'');
 }
 function novoProduto() {
   document.getElementById('prod-id').value = '';
