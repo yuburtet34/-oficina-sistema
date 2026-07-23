@@ -514,6 +514,19 @@ def listar_produtos(busca: str = "", limit: int = 50, offset: int = 0):
 
 # ── Frontend ──────────────────────────────────────────────────
 
+
+@app.post("/api/produtos")
+async def criar_produto(req: Request):
+    body = await req.json()
+    with get_db() as db:
+        db.execute("""INSERT INTO produtos (codigo, nome, valor_venda, qt_estoque, qt_minima)
+            VALUES (?,?,?,?,?)""",
+            (body.get('codigo'), body.get('nome'), body.get('valor_venda',0),
+             body.get('qt_estoque',0), body.get('qt_minima',0)))
+        db.commit()
+        id_novo = db.execute("SELECT last_insert_rowid()").fetchone()[0]
+    return {"ok": True, "id": id_novo}
+
 @app.get("/api/produtos/{produto_id}")
 def get_produto(produto_id: int):
     with get_db() as db:
@@ -606,6 +619,19 @@ if __name__ == "__main__":
 ╚══════════════════════════════════════════════════╝
 """)
     uvicorn.run(app, host="0.0.0.0", port=8000, log_level="warning")
+
+@app.post("/api/produtos")
+async def criar_produto(req: Request):
+    body = await req.json()
+    with get_db() as db:
+        db.execute("""INSERT INTO produtos (codigo, nome, valor_venda, qt_estoque, qt_minima)
+            VALUES (?,?,?,?,?)""",
+            (body.get('codigo'), body.get('nome'), body.get('valor_venda',0),
+             body.get('qt_estoque',0), body.get('qt_minima',0)))
+        db.commit()
+        id_novo = db.execute("SELECT last_insert_rowid()").fetchone()[0]
+    return {"ok": True, "id": id_novo}
+
 @app.get("/api/produtos/{produto_id}")
 def get_produto(produto_id: int):
     with get_db() as db:
