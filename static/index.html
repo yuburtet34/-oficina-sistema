@@ -931,6 +931,7 @@ async function fazerLogin() {
   e.style.display = 'none';
   if (!u || !s) { e.textContent = 'Preencha usuario e senha'; e.style.display = 'block'; return; }
   var r = await fetch('/api/login', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({usuario:u, senha:s})});
+  if (r.status === 429) { var d429=await r.json().catch(()=>({})); e.textContent=d429.detail||'Muitas tentativas. Tente mais tarde.'; e.style.display='block'; return; }
   if (r.ok) {
     var me = await fetch('/api/me');
     var meData = await me.json();
@@ -940,7 +941,7 @@ async function fazerLogin() {
     aplicarPermissoes();
     renderDashboard();
   }
-  else { e.textContent = 'Usuario ou senha incorretos'; e.style.display = 'block'; }
+  else { var errData=await r.json().catch(()=>({})); e.textContent=errData.detail||'Usuario ou senha incorretos'; e.style.display = 'block'; }
 }
 async function fazerLogout() {
   await fetch('/api/logout', {method:'POST'});
@@ -948,6 +949,7 @@ async function fazerLogout() {
 }
 async function verificarLogin() {
   var r = await fetch('/api/me');
+  if (r.status === 429) { var d429=await r.json().catch(()=>({})); e.textContent=d429.detail||'Muitas tentativas. Tente mais tarde.'; e.style.display='block'; return; }
   if (r.ok) {
     var me = await fetch('/api/me');
     var meData = await me.json();
@@ -1216,6 +1218,8 @@ async function salvarUsuario() {
   var senha = document.getElementById('usu-senha').value;
   if (senha) body.senha = senha;
   if (!body.usuario) { alert('Login obrigatório'); return; }
+  if (senha && senha.length < 8) { alert('Senha deve ter no mínimo 8 caracteres'); return; }
+  if (!id && !senha) { alert('Senha obrigatória para novo usuário'); return; }
   try {
     if (id) {
       await api('/usuarios/' + id, {method: 'PUT', body: body});
@@ -1227,6 +1231,28 @@ async function salvarUsuario() {
     renderUsuarios();
   } catch(e) { alert('Erro ao salvar usuário'); }
 }
+
+
+var _ultimaAtividade = Date.now();
+var _timeoutSessao = 8 * 60 * 60 * 1000; // 8 horas
+
+function resetarAtividade() {
+  _ultimaAtividade = Date.now();
+}
+
+function verificarSessao() {
+  if (Date.now() - _ultimaAtividade > _timeoutSessao) {
+    alert('Sessão expirada. Faça login novamente.');
+    fazerLogout();
+  }
+}
+
+// Monitora atividade
+document.addEventListener('click', resetarAtividade);
+document.addEventListener('keypress', resetarAtividade);
+
+// Verifica a cada 5 minutos
+setInterval(verificarSessao, 5 * 60 * 1000);
 
 </script>
 <div id="login-overlay" style="display:none;position:fixed;inset:0;background:#1a3a6b;z-index:9999;align-items:center;justify-content:center">

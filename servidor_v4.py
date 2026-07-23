@@ -18,16 +18,74 @@ from fastapi.staticfiles import StaticFiles
 import uvicorn
 import hashlib
 import secrets
-import hashlib
-import secrets
-import hashlib
-import secrets
+import bcrypt
+from datetime import datetime, timedelta
+from collections import defaultdict
+import time
 
 # ── Configuração ──────────────────────────────────────────────
 BASE_DIR = Path(__file__).parent
 import os as _os
 DB_PATH  = Path(_os.environ.get("DB_PATH", str(BASE_DIR / "db" / "oficina.db")))
 (BASE_DIR / "db").mkdir(parents=True, exist_ok=True)
+
+# Controle de tentativas de login
+_tentativas = defaultdict(list)
+_bloqueados = {}
+
+def verificar_bloqueio(ip):
+    if ip in _bloqueados:
+        if time.time() < _bloqueados[ip]:
+            resto = int(_bloqueados[ip] - time.time())
+            return f"IP bloqueado por {resto} segundos"
+        else:
+            del _bloqueados[ip]
+            _tentativas[ip] = []
+    agora = time.time()
+    _tentativas[ip] = [t for t in _tentativas[ip] if agora - t < 300]
+    if len(_tentativas[ip]) >= 5:
+        _bloqueados[ip] = time.time() + 300
+        return "Muitas tentativas. IP bloqueado por 5 minutos"
+    return None
+
+def registrar_tentativa(ip, sucesso):
+    if sucesso:
+        _tentativas[ip] = []
+        if ip in _bloqueados:
+            del _bloqueados[ip]
+    else:
+        _tentativas[ip].append(time.time())
+
+
+# ── Backup automático ─────────────────────────────────────────
+import shutil
+import threading
+
+def fazer_backup():
+    try:
+        agora = datetime.now().strftime("%Y%m%d_%H%M%S")
+        backup_dir = DB_PATH.parent / "backups"
+        backup_dir.mkdir(exist_ok=True)
+        dest = backup_dir / f"oficina_backup_{agora}.db"
+        shutil.copy2(DB_PATH, dest)
+        # Manter apenas os ultimos 7 backups
+        backups = sorted(backup_dir.glob("oficina_backup_*.db"))
+        for b in backups[:-7]:
+            b.unlink()
+        print(f"✅ Backup criado: {dest.name}")
+    except Exception as e:
+        print(f"❌ Erro no backup: {e}")
+
+def agendar_backup():
+    while True:
+        # Aguarda 24 horas
+        time.sleep(24 * 60 * 60)
+        fazer_backup()
+
+# Inicia backup em background
+_backup_thread = threading.Thread(target=agendar_backup, daemon=True)
+_backup_thread.start()
+
 app      = FastAPI(title="Sistema Oficina")
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
 
@@ -569,7 +627,9 @@ def get_usuario(usuario_id: int):
 async def criar_usuario(req: Request):
     body = await req.json()
     senha = body.get('senha','')
-    senha_hash = hashlib.sha256(senha.encode()).hexdigest()
+    if not senha or len(senha) < 8:
+        raise HTTPException(400, 'Senha deve ter no minimo 8 caracteres')
+    senha_hash = bcrypt.hashpw(senha.encode(), bcrypt.gensalt()).decode()
     with get_db() as db:
         db.execute("INSERT INTO usuarios (usuario,senha_hash,nome,perfil,ativo) VALUES (?,?,?,?,?)",
             (body.get('usuario'), senha_hash, body.get('nome'), body.get('perfil','funcionario'), 1 if body.get('ativo') else 0))
@@ -581,7 +641,9 @@ async def atualizar_usuario(usuario_id: int, req: Request):
     body = await req.json()
     with get_db() as db:
         if body.get('senha'):
-            senha_hash = hashlib.sha256(body['senha'].encode()).hexdigest()
+            if len(body['senha']) < 8:
+                raise HTTPException(400, 'Senha deve ter no minimo 8 caracteres')
+            senha_hash = bcrypt.hashpw(body['senha'].encode(), bcrypt.gensalt()).decode()
             db.execute("UPDATE usuarios SET usuario=?,nome=?,perfil=?,ativo=?,senha_hash=? WHERE id=?",
                 (body.get('usuario'), body.get('nome'), body.get('perfil','funcionario'),
                  1 if body.get('ativo') else 0, senha_hash, usuario_id))
@@ -595,10 +657,28 @@ async def atualizar_usuario(usuario_id: int, req: Request):
 # endpoints de login 
 @app.post("/api/login") 
 async def login(req: Request): 
+    ip = req.client.host if req.client else "unknown"
+    bloqueio = verificar_bloqueio(ip)
+    if bloqueio:
+        raise HTTPException(429, bloqueio)
     body=await req.json() 
     with get_db() as db: 
+        row=db.execute("SELECT * FROM usuarios WHERE usuario=? AND ativo=1",(body.get("usuario",""),)).fetchone()
+    senha = body.get("senha","")
+    ok = False
+    if row:
+        h = row["senha_hash"]
+        if h.startswith("$2b$"):
+            import bcrypt
+            ok = bcrypt.checkpw(senha.encode(), h.encode())
+        else:
+            ok = hash_senha(senha) == h
+    if not row or not ok:
+        registrar_tentativa(ip, False)
+        raise HTTPException(401,"Usuario ou senha invalidos")
+    registrar_tentativa(ip, True)
+    with get_db() as db:
         row=db.execute("SELECT * FROM usuarios WHERE usuario=? AND ativo=1",(body.get("usuario",""),)).fetchone() 
-        if not row or row["senha_hash"]!=hash_senha(body.get("senha","")): raise HTTPException(401,"Usuario ou senha invalidos") 
         import secrets 
         token=secrets.token_hex(32) 
         db.execute("INSERT INTO sessoes (token,usuario_id,expira_em) VALUES (?,?,datetime('now','localtime','+7 days'))",(token,row["id"])) 
@@ -711,7 +791,9 @@ def get_usuario(usuario_id: int):
 async def criar_usuario(req: Request):
     body = await req.json()
     senha = body.get('senha','')
-    senha_hash = hashlib.sha256(senha.encode()).hexdigest()
+    if not senha or len(senha) < 8:
+        raise HTTPException(400, 'Senha deve ter no minimo 8 caracteres')
+    senha_hash = bcrypt.hashpw(senha.encode(), bcrypt.gensalt()).decode()
     with get_db() as db:
         db.execute("INSERT INTO usuarios (usuario,senha_hash,nome,perfil,ativo) VALUES (?,?,?,?,?)",
             (body.get('usuario'), senha_hash, body.get('nome'), body.get('perfil','funcionario'), 1 if body.get('ativo') else 0))
@@ -723,7 +805,9 @@ async def atualizar_usuario(usuario_id: int, req: Request):
     body = await req.json()
     with get_db() as db:
         if body.get('senha'):
-            senha_hash = hashlib.sha256(body['senha'].encode()).hexdigest()
+            if len(body['senha']) < 8:
+                raise HTTPException(400, 'Senha deve ter no minimo 8 caracteres')
+            senha_hash = bcrypt.hashpw(body['senha'].encode(), bcrypt.gensalt()).decode()
             db.execute("UPDATE usuarios SET usuario=?,nome=?,perfil=?,ativo=?,senha_hash=? WHERE id=?",
                 (body.get('usuario'), body.get('nome'), body.get('perfil','funcionario'),
                  1 if body.get('ativo') else 0, senha_hash, usuario_id))
