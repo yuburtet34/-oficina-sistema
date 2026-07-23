@@ -696,8 +696,8 @@ async function renderProdutos() {
   document.getElementById('page-produtos').innerHTML=`
     <div class="page-title">📦 Produtos / Estoque</div>
     <div class="table-wrap">
-      <div class="table-header"><input class="search-input" placeholder="🔍 Nome ou código..." oninput="buscarProdutos(this.value)"></div>
-      <table><thead><tr><th>Código</th><th>Nome</th><th>Valor Venda</th><th>Estoque</th><th>Situação</th><th></th></tr></thead>
+      <div class="table-header" style="flex-wrap:wrap;gap:8px"><input class="search-input" placeholder="🔍 Nome ou código..." oninput="buscarProdutos(this.value)"><div id="prod-acoes" style="display:none;gap:8px"><button onclick="excluirSelecionados()" style="padding:6px 14px;background:#dc2626;color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer">🗑️ Excluir selecionados</button><span id="prod-count" style="font-size:12px;color:#4a5568;align-self:center"></span></div></div>
+      <table><thead><tr><th style="width:36px"><input type="checkbox" id="chk-todos-prod" onclick="selecionarTodosProd(this.checked)"></th><th>Código</th><th>Nome</th><th>Valor Venda</th><th>Estoque</th><th>Situação</th><th></th></tr></thead>
       <tbody id="produtos-tbody"><tr><td colspan="5" style="text-align:center;padding:30px;color:var(--text2)">Carregando...</td></tr></tbody></table></div>`;
   buscarProdutos('');
 }
@@ -709,9 +709,10 @@ async function buscarProdutos(v) {
     const d=await api(`/produtos?busca=${encodeURIComponent(v)}&limit=100`);
     const tbody=document.getElementById('produtos-tbody');if(!tbody)return;
     tbody.innerHTML=d.map(p=>{
+      const chk='<td><input type="checkbox" class="chk-prod" value="'+p.id+'" onchange="atualizarBtnProd()"></td>';
       const qt=parseFloat(p.qt_estoque)||0,min=parseFloat(p.qt_minima)||0,baixo=min>0&&qt<=min;
       return `<tr>
-        <td class="text2 mono">${p.codigo||'-'}</td>
+        ${chk}<td class="text2 mono">${p.codigo||'-'}</td>
         <td><strong>${p.nome}</strong></td>
         <td style="color:var(--accent)">${fmt(p.valor_venda)}</td>
         <td style="font-weight:600;color:${baixo?'var(--red)':'var(--text)'}">${qt}</td>
@@ -1030,6 +1031,33 @@ function filtrarOSStatus(v){state.osStatus=v;state.osPage=0;document.querySelect
 async function excluirProduto(id){try{const p=await api('/produtos/'+id);if(!confirm('Excluir produto: '+p.nome+'?'))return;await api('/produtos/'+id,{method:'DELETE'});buscarProdutos(document.querySelector('.search-input')?document.querySelector('.search-input').value:'');}catch(e){alert('Erro ao excluir produto');}}
 async function editarProduto(id){try{const p=await api('/produtos/'+id);document.getElementById('prod-id').value=p.id;document.getElementById('prod-codigo').value=p.codigo||'';document.getElementById('prod-nome').value=p.nome||'';document.getElementById('prod-valor').value=p.valor_venda||0;document.getElementById('prod-estoque').value=p.qt_estoque||0;document.getElementById('prod-minimo').value=p.qt_minima||0;document.getElementById('modal-produto').classList.add('open');}catch(e){alert('Erro ao carregar produto');}}
 async function salvarProduto(){var id=document.getElementById('prod-id').value;var body={codigo:document.getElementById('prod-codigo').value.trim(),nome:document.getElementById('prod-nome').value.trim(),valor_venda:parseFloat(document.getElementById('prod-valor').value)||0,qt_estoque:parseFloat(document.getElementById('prod-estoque').value)||0,qt_minima:parseFloat(document.getElementById('prod-minimo').value)||0};try{await api('/produtos/'+id,{method:'PUT',body:body});fecharModal('modal-produto');buscarProdutos('');}catch(e){alert('Erro ao salvar produto');}}
+
+function selecionarTodosProd(checked) {
+  document.querySelectorAll('.chk-prod').forEach(cb => cb.checked = checked);
+  atualizarBtnProd();
+}
+function atualizarBtnProd() {
+  var selecionados = document.querySelectorAll('.chk-prod:checked');
+  var bar = document.getElementById('prod-acoes');
+  var count = document.getElementById('prod-count');
+  if (bar) bar.style.display = selecionados.length > 0 ? 'flex' : 'none';
+  if (count) count.textContent = selecionados.length + ' selecionado(s)';
+}
+async function excluirSelecionados() {
+  var ids = [...document.querySelectorAll('.chk-prod:checked')].map(cb => cb.value);
+  if (!ids.length) return;
+  if (!confirm('Excluir ' + ids.length + ' produto(s) selecionado(s)?')) return;
+  try {
+    for (var id of ids) {
+      await api('/produtos/' + id, {method: 'DELETE'});
+    }
+    buscarProdutos('');
+    var chkTodos = document.getElementById('chk-todos-prod');
+    if (chkTodos) chkTodos.checked = false;
+    atualizarBtnProd();
+  } catch(e) { alert('Erro ao excluir produtos'); }
+}
+
 </script>
 <div id="login-overlay" style="display:none;position:fixed;inset:0;background:#1a3a6b;z-index:9999;align-items:center;justify-content:center">
 <div style="background:#fff;border-radius:16px;padding:40px;width:360px;box-shadow:0 20px 60px rgba(0,0,0,.3)">
