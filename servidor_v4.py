@@ -494,21 +494,23 @@ def listar_clientes(busca: str = "", limit: int = 30):
                 ORDER BY nome LIMIT ?
             """, (f"%{busca}%", f"%{busca}%", f"%{busca}%", f"%{busca}%", limit)).fetchall()
         else:
-            rows = db.execute("SELECT * FROM clientes ORDER BY nome LIMIT ?", (limit,)).fetchall()
-        return [dict(r) for r in rows]
+            rows = db.execute("SELECT * FROM clientes ORDER BY nome LIMIT ?", (limit, offset)).fetchall()
+        return {"total": total, "items": [dict(r) for r in rows]}
 
 # ── API - Produtos ────────────────────────────────────────────
 @app.get("/api/produtos")
-def listar_produtos(busca: str = "", limit: int = 50):
+def listar_produtos(busca: str = "", limit: int = 50, offset: int = 0):
     with get_db() as db:
         if busca:
+            total = db.execute("SELECT COUNT(*) FROM produtos WHERE nome LIKE ? OR codigo LIKE ?", (f"%{busca}%", f"%{busca}%")).fetchone()[0]
             rows = db.execute("""
                 SELECT * FROM produtos WHERE nome LIKE ? OR codigo LIKE ?
-                ORDER BY nome LIMIT ?
-            """, (f"%{busca}%", f"%{busca}%", limit)).fetchall()
+                ORDER BY nome LIMIT ? OFFSET ?
+            """, (f"%{busca}%", f"%{busca}%", limit, offset)).fetchall()
         else:
-            rows = db.execute("SELECT * FROM produtos ORDER BY nome LIMIT ?", (limit,)).fetchall()
-        return [dict(r) for r in rows]
+            total = db.execute("SELECT COUNT(*) FROM produtos").fetchone()[0]
+            rows = db.execute("SELECT * FROM produtos ORDER BY nome LIMIT ? OFFSET ?", (limit, offset)).fetchall()
+        return {"total": total, "items": [dict(r) for r in rows]}
 
 # ── Frontend ──────────────────────────────────────────────────
 
