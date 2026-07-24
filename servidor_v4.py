@@ -657,7 +657,7 @@ async def atualizar_usuario(usuario_id: int, req: Request):
 # endpoints de login 
 @app.post("/api/login") 
 async def login(req: Request): 
-    ip = req.client.host if req.client else "unknown"
+    ip = req.headers.get('x-forwarded-for', req.client.host if req.client else 'unknown').split(',')[0].strip()
     bloqueio = verificar_bloqueio(ip)
     if bloqueio:
         raise HTTPException(429, bloqueio)
