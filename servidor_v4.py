@@ -19,6 +19,10 @@ import uvicorn
 import hashlib
 import secrets
 import bcrypt
+import pyotp
+import qrcode
+import io
+import base64
 from datetime import datetime, timedelta
 from collections import defaultdict
 import time
@@ -654,6 +658,84 @@ async def atualizar_usuario(usuario_id: int, req: Request):
         db.commit()
     return {"ok": True}
 
+
+@app.get("/api/2fa/setup")
+def setup_2fa(session_token: str = Cookie(None)):
+    user = get_usuario_atual(session_token)
+    if not user:
+        raise HTTPException(401, "Nao autenticado")
+    secret = pyotp.random_base32()
+    totp = pyotp.TOTP(secret)
+    uri = totp.provisioning_uri(name=user["usuario"], issuer_name="Alta Performance")
+    qr = qrcode.make(uri)
+    buf = io.BytesIO()
+    qr.save(buf, format="PNG")
+    qr_b64 = base64.b64encode(buf.getvalue()).decode()
+    with get_db() as db:
+        db.execute("UPDATE usuarios SET totp_secret=? WHERE id=?", (secret, user["id"]))
+        db.commit()
+    return {"qr": qr_b64, "secret": secret}
+
+@app.post("/api/2fa/ativar")
+async def ativar_2fa(session_token: str = Cookie(None), req: Request = None):
+    user = get_usuario_atual(session_token)
+    if not user:
+        raise HTTPException(401, "Nao autenticado")
+    body = await req.json()
+    codigo = body.get("codigo", "")
+    with get_db() as db:
+        row = db.execute("SELECT totp_secret FROM usuarios WHERE id=?", (user["id"],)).fetchone()
+    if not row or not row["totp_secret"]:
+        raise HTTPException(400, "Configure o 2FA primeiro")
+    totp = pyotp.TOTP(row["totp_secret"])
+    if not totp.verify(codigo):
+        raise HTTPException(400, "Codigo invalido")
+    with get_db() as db:
+        db.execute("UPDATE usuarios SET totp_ativo=1 WHERE id=?", (user["id"],))
+        db.commit()
+    return {"ok": True}
+
+@app.post("/api/2fa/verificar")
+async def verificar_2fa(req: Request):
+    body = await req.json()
+    usuario = body.get("usuario", "")
+    codigo = body.get("codigo", "")
+    with get_db() as db:
+        row = db.execute("SELECT * FROM usuarios WHERE usuario=? AND ativo=1", (usuario,)).fetchone()
+    if not row or not row["totp_secret"]:
+        raise HTTPException(400, "2FA nao configurado")
+    totp = pyotp.TOTP(row["totp_secret"])
+    if not totp.verify(codigo):
+        raise HTTPException(401, "Codigo 2FA invalido")
+    # Cria sessao apos verificacao 2FA
+    import secrets as _secrets
+    token = _secrets.token_hex(32)
+    with get_db() as db:
+        db.execute("INSERT INTO sessoes (token,usuario_id,expira_em) VALUES (?,?,datetime('now','localtime','+7 days'))", (token, row["id"]))
+        db.commit()
+    resp = JSONResponse({"ok": True, "nome": row["nome"], "perfil": row["perfil"]})
+    resp.set_cookie("session_token", token, httponly=True, max_age=604800, samesite="none", secure=True)
+    return resp
+
+@app.post("/api/2fa/desativar")
+async def desativar_2fa(session_token: str = Cookie(None), req: Request = None):
+    user = get_usuario_atual(session_token)
+    if not user:
+        raise HTTPException(401, "Nao autenticado")
+    body = await req.json()
+    codigo = body.get("codigo", "")
+    with get_db() as db:
+        row = db.execute("SELECT totp_secret FROM usuarios WHERE id=?", (user["id"],)).fetchone()
+    if not row or not row["totp_secret"]:
+        raise HTTPException(400, "2FA nao ativado")
+    totp = pyotp.TOTP(row["totp_secret"])
+    if not totp.verify(codigo):
+        raise HTTPException(401, "Codigo invalido")
+    with get_db() as db:
+        db.execute("UPDATE usuarios SET totp_ativo=0, totp_secret=NULL WHERE id=?", (user["id"],))
+        db.commit()
+    return {"ok": True}
+
 # endpoints de login 
 @app.post("/api/login") 
 async def login(req: Request): 
@@ -677,6 +759,9 @@ async def login(req: Request):
         registrar_tentativa(ip, False)
         raise HTTPException(401,"Usuario ou senha invalidos")
     registrar_tentativa(ip, True)
+    # Verifica se tem 2FA ativo
+    if row["totp_ativo"]:
+        return JSONResponse({"ok": False, "requer_2fa": True, "usuario": body.get("usuario","")})
     with get_db() as db:
         row=db.execute("SELECT * FROM usuarios WHERE usuario=? AND ativo=1",(body.get("usuario",""),)).fetchone() 
         import secrets 
@@ -815,6 +900,84 @@ async def atualizar_usuario(usuario_id: int, req: Request):
             db.execute("UPDATE usuarios SET usuario=?,nome=?,perfil=?,ativo=? WHERE id=?",
                 (body.get('usuario'), body.get('nome'), body.get('perfil','funcionario'),
                  1 if body.get('ativo') else 0, usuario_id))
+        db.commit()
+    return {"ok": True}
+
+
+@app.get("/api/2fa/setup")
+def setup_2fa(session_token: str = Cookie(None)):
+    user = get_usuario_atual(session_token)
+    if not user:
+        raise HTTPException(401, "Nao autenticado")
+    secret = pyotp.random_base32()
+    totp = pyotp.TOTP(secret)
+    uri = totp.provisioning_uri(name=user["usuario"], issuer_name="Alta Performance")
+    qr = qrcode.make(uri)
+    buf = io.BytesIO()
+    qr.save(buf, format="PNG")
+    qr_b64 = base64.b64encode(buf.getvalue()).decode()
+    with get_db() as db:
+        db.execute("UPDATE usuarios SET totp_secret=? WHERE id=?", (secret, user["id"]))
+        db.commit()
+    return {"qr": qr_b64, "secret": secret}
+
+@app.post("/api/2fa/ativar")
+async def ativar_2fa(session_token: str = Cookie(None), req: Request = None):
+    user = get_usuario_atual(session_token)
+    if not user:
+        raise HTTPException(401, "Nao autenticado")
+    body = await req.json()
+    codigo = body.get("codigo", "")
+    with get_db() as db:
+        row = db.execute("SELECT totp_secret FROM usuarios WHERE id=?", (user["id"],)).fetchone()
+    if not row or not row["totp_secret"]:
+        raise HTTPException(400, "Configure o 2FA primeiro")
+    totp = pyotp.TOTP(row["totp_secret"])
+    if not totp.verify(codigo):
+        raise HTTPException(400, "Codigo invalido")
+    with get_db() as db:
+        db.execute("UPDATE usuarios SET totp_ativo=1 WHERE id=?", (user["id"],))
+        db.commit()
+    return {"ok": True}
+
+@app.post("/api/2fa/verificar")
+async def verificar_2fa(req: Request):
+    body = await req.json()
+    usuario = body.get("usuario", "")
+    codigo = body.get("codigo", "")
+    with get_db() as db:
+        row = db.execute("SELECT * FROM usuarios WHERE usuario=? AND ativo=1", (usuario,)).fetchone()
+    if not row or not row["totp_secret"]:
+        raise HTTPException(400, "2FA nao configurado")
+    totp = pyotp.TOTP(row["totp_secret"])
+    if not totp.verify(codigo):
+        raise HTTPException(401, "Codigo 2FA invalido")
+    # Cria sessao apos verificacao 2FA
+    import secrets as _secrets
+    token = _secrets.token_hex(32)
+    with get_db() as db:
+        db.execute("INSERT INTO sessoes (token,usuario_id,expira_em) VALUES (?,?,datetime('now','localtime','+7 days'))", (token, row["id"]))
+        db.commit()
+    resp = JSONResponse({"ok": True, "nome": row["nome"], "perfil": row["perfil"]})
+    resp.set_cookie("session_token", token, httponly=True, max_age=604800, samesite="none", secure=True)
+    return resp
+
+@app.post("/api/2fa/desativar")
+async def desativar_2fa(session_token: str = Cookie(None), req: Request = None):
+    user = get_usuario_atual(session_token)
+    if not user:
+        raise HTTPException(401, "Nao autenticado")
+    body = await req.json()
+    codigo = body.get("codigo", "")
+    with get_db() as db:
+        row = db.execute("SELECT totp_secret FROM usuarios WHERE id=?", (user["id"],)).fetchone()
+    if not row or not row["totp_secret"]:
+        raise HTTPException(400, "2FA nao ativado")
+    totp = pyotp.TOTP(row["totp_secret"])
+    if not totp.verify(codigo):
+        raise HTTPException(401, "Codigo invalido")
+    with get_db() as db:
+        db.execute("UPDATE usuarios SET totp_ativo=0, totp_secret=NULL WHERE id=?", (user["id"],))
         db.commit()
     return {"ok": True}
 
