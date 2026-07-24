@@ -1323,7 +1323,7 @@ async function ativar2FA() {
 <div style="background:#fff;border-radius:16px;padding:40px;width:360px;box-shadow:0 20px 60px rgba(0,0,0,.3)">
 <h2 style="text-align:center;color:#1a3a6b;margin-bottom:20px;font-size:16px;font-weight:900">ALTA PERFORMANCE MOTORSPORT</h2>
 <input id="lin-u" placeholder="Usuario" style="width:100%;padding:10px;border:1.5px solid #cbd5e0;border-radius:8px;margin-bottom:10px;box-sizing:border-box;font-size:14px">
-<input id="lin-s" type="password" placeholder="Senha" style="width:100%;padding:10px;border:1.5px solid #cbd5e0;border-radius:8px;margin-bottom:8px;box-sizing:border-box;font-size:14px">
+<div style="position:relative;margin-bottom:8px"><input id="lin-s" type="password" placeholder="Senha" style="width:100%;padding:10px;padding-right:42px;border:1.5px solid #cbd5e0;border-radius:8px;box-sizing:border-box;font-size:14px"><button type="button" id="btn-ver-senha" onclick="var i=document.getElementById('lin-s');i.type=i.type==='password'?'text':'password';this.textContent=i.type==='password'?'👁️':'🙈'" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;padding:2px">👁️</button></div>
 <div id="lin-e" style="display:none;color:#dc2626;font-size:12px;margin-bottom:8px"></div>
 <button id="lin-btn" style="width:100%;padding:12px;background:#2563eb;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer">Entrar</button>
 </div></div>
