@@ -459,7 +459,7 @@ async def atualizar_os(os_id: int, req: Request):
         itens = body.pop("itens", None)
         if itens is not None:
             valor_bruto   = sum(i.get("quantidade", 1) * i.get("valor_unitario", 0) for i in itens)
-            desconto      = sum(i.get("desconto", 0) for i in itens)
+            desconto      = float(body.get("desconto", 0) or 0)
             valor_liquido = valor_bruto - desconto
             body.update({"valor_bruto": round(valor_bruto, 2),
                          "desconto":    round(desconto, 2),
