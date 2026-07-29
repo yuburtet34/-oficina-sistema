@@ -225,6 +225,7 @@ def init_db():
             CREATE INDEX IF NOT EXISTS idx_os_status   ON ordens_servico(status);
             CREATE INDEX IF NOT EXISTS idx_os_data     ON ordens_servico(data);
             CREATE INDEX IF NOT EXISTS idx_veiculo_placa ON veiculos(placa);
+        CREATE TABLE IF NOT EXISTS caixa (id INTEGER PRIMARY KEY AUTOINCREMENT,tipo TEXT NOT NULL,descricao TEXT NOT NULL,categoria TEXT,placa TEXT,valor_os REAL DEFAULT 0,desconto REAL DEFAULT 0,forma_pagamento TEXT,valor REAL DEFAULT 0,data TEXT,hora TEXT,criado_em TEXT DEFAULT (datetime('now','localtime')));
         """)
     print("✅ Banco de dados iniciado")
     criar_admin_padrao()
@@ -736,6 +737,70 @@ async def desativar_2fa(session_token: str = Cookie(None), req: Request = None):
         db.commit()
     return {"ok": True}
 
+
+@app.get("/api/caixa")
+def listar_caixa(data: str = "", session_token: str = Cookie(None)):
+    exigir_admin(session_token)
+    with get_db() as db:
+        if data:
+            entradas = db.execute("SELECT * FROM caixa WHERE tipo='entrada' AND substr(data,1,7)=? ORDER BY id DESC", (data[:7],)).fetchall()
+            saidas = db.execute("SELECT * FROM caixa WHERE tipo='saida' AND substr(data,1,7)=? ORDER BY id DESC", (data[:7],)).fetchall()
+        else:
+            hoje = datetime.now().strftime("%Y-%m-%d")
+            entradas = db.execute("SELECT * FROM caixa WHERE tipo='entrada' AND data=? ORDER BY id DESC", (hoje,)).fetchall()
+            saidas = db.execute("SELECT * FROM caixa WHERE tipo='saida' AND data=? ORDER BY id DESC", (hoje,)).fetchall()
+        return {
+            "entradas": [dict(r) for r in entradas],
+            "saidas": [dict(r) for r in saidas]
+        }
+
+@app.post("/api/caixa")
+async def criar_caixa(req: Request, session_token: str = Cookie(None)):
+    exigir_admin(session_token)
+    body = await req.json()
+    hora = datetime.now().strftime("%H:%M")
+    with get_db() as db:
+        db.execute("INSERT INTO caixa (tipo,descricao,categoria,valor,data,hora) VALUES (?,?,?,?,?,?)",
+            (body.get('tipo'), body.get('descricao'), body.get('categoria'),
+             body.get('valor', 0), body.get('data'), hora))
+        db.commit()
+    return {"ok": True}
+
+@app.delete("/api/caixa/{caixa_id}")
+def deletar_caixa(caixa_id: int, session_token: str = Cookie(None)):
+    exigir_admin(session_token)
+    with get_db() as db:
+        db.execute("DELETE FROM caixa WHERE id=?", (caixa_id,))
+        db.commit()
+    return {"ok": True}
+
+@app.get("/api/caixa")
+def listar_caixa(data: str = "", session_token: str = Cookie(None)):
+    exigir_admin(session_token)
+    with get_db() as db:
+        if not data: data = datetime.now().strftime("%Y-%m-%d")
+        entradas = db.execute("SELECT * FROM caixa WHERE tipo='entrada' AND (data=? OR substr(data,1,7)=?) ORDER BY id DESC", (data,data)).fetchall()
+        saidas = db.execute("SELECT * FROM caixa WHERE tipo='saida' AND (data=? OR substr(data,1,7)=?) ORDER BY id DESC", (data,data)).fetchall()
+        return {"entradas": [dict(r) for r in entradas], "saidas": [dict(r) for r in saidas]}
+
+@app.post("/api/caixa")
+async def criar_caixa(req: Request, session_token: str = Cookie(None)):
+    exigir_admin(session_token)
+    body = await req.json()
+    hora = datetime.now().strftime("%H:%M")
+    with get_db() as db:
+        db.execute("INSERT INTO caixa (tipo,descricao,categoria,valor,data,hora) VALUES (?,?,?,?,?,?)", (body.get('tipo'), body.get('descricao'), body.get('categoria'), body.get('valor', 0), body.get('data'), hora))
+        db.commit()
+    return {"ok": True}
+
+@app.delete("/api/caixa/{caixa_id}")
+def deletar_caixa(caixa_id: int, session_token: str = Cookie(None)):
+    exigir_admin(session_token)
+    with get_db() as db:
+        db.execute("DELETE FROM caixa WHERE id=?", (caixa_id,))
+        db.commit()
+    return {"ok": True}
+
 # endpoints de login 
 @app.post("/api/login") 
 async def login(req: Request): 
@@ -978,6 +1043,70 @@ async def desativar_2fa(session_token: str = Cookie(None), req: Request = None):
         raise HTTPException(401, "Codigo invalido")
     with get_db() as db:
         db.execute("UPDATE usuarios SET totp_ativo=0, totp_secret=NULL WHERE id=?", (user["id"],))
+        db.commit()
+    return {"ok": True}
+
+
+@app.get("/api/caixa")
+def listar_caixa(data: str = "", session_token: str = Cookie(None)):
+    exigir_admin(session_token)
+    with get_db() as db:
+        if data:
+            entradas = db.execute("SELECT * FROM caixa WHERE tipo='entrada' AND substr(data,1,7)=? ORDER BY id DESC", (data[:7],)).fetchall()
+            saidas = db.execute("SELECT * FROM caixa WHERE tipo='saida' AND substr(data,1,7)=? ORDER BY id DESC", (data[:7],)).fetchall()
+        else:
+            hoje = datetime.now().strftime("%Y-%m-%d")
+            entradas = db.execute("SELECT * FROM caixa WHERE tipo='entrada' AND data=? ORDER BY id DESC", (hoje,)).fetchall()
+            saidas = db.execute("SELECT * FROM caixa WHERE tipo='saida' AND data=? ORDER BY id DESC", (hoje,)).fetchall()
+        return {
+            "entradas": [dict(r) for r in entradas],
+            "saidas": [dict(r) for r in saidas]
+        }
+
+@app.post("/api/caixa")
+async def criar_caixa(req: Request, session_token: str = Cookie(None)):
+    exigir_admin(session_token)
+    body = await req.json()
+    hora = datetime.now().strftime("%H:%M")
+    with get_db() as db:
+        db.execute("INSERT INTO caixa (tipo,descricao,categoria,valor,data,hora) VALUES (?,?,?,?,?,?)",
+            (body.get('tipo'), body.get('descricao'), body.get('categoria'),
+             body.get('valor', 0), body.get('data'), hora))
+        db.commit()
+    return {"ok": True}
+
+@app.delete("/api/caixa/{caixa_id}")
+def deletar_caixa(caixa_id: int, session_token: str = Cookie(None)):
+    exigir_admin(session_token)
+    with get_db() as db:
+        db.execute("DELETE FROM caixa WHERE id=?", (caixa_id,))
+        db.commit()
+    return {"ok": True}
+
+@app.get("/api/caixa")
+def listar_caixa(data: str = "", session_token: str = Cookie(None)):
+    exigir_admin(session_token)
+    with get_db() as db:
+        if not data: data = datetime.now().strftime("%Y-%m-%d")
+        entradas = db.execute("SELECT * FROM caixa WHERE tipo='entrada' AND (data=? OR substr(data,1,7)=?) ORDER BY id DESC", (data,data)).fetchall()
+        saidas = db.execute("SELECT * FROM caixa WHERE tipo='saida' AND (data=? OR substr(data,1,7)=?) ORDER BY id DESC", (data,data)).fetchall()
+        return {"entradas": [dict(r) for r in entradas], "saidas": [dict(r) for r in saidas]}
+
+@app.post("/api/caixa")
+async def criar_caixa(req: Request, session_token: str = Cookie(None)):
+    exigir_admin(session_token)
+    body = await req.json()
+    hora = datetime.now().strftime("%H:%M")
+    with get_db() as db:
+        db.execute("INSERT INTO caixa (tipo,descricao,categoria,valor,data,hora) VALUES (?,?,?,?,?,?)", (body.get('tipo'), body.get('descricao'), body.get('categoria'), body.get('valor', 0), body.get('data'), hora))
+        db.commit()
+    return {"ok": True}
+
+@app.delete("/api/caixa/{caixa_id}")
+def deletar_caixa(caixa_id: int, session_token: str = Cookie(None)):
+    exigir_admin(session_token)
+    with get_db() as db:
+        db.execute("DELETE FROM caixa WHERE id=?", (caixa_id,))
         db.commit()
     return {"ok": True}
 
