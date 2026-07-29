@@ -760,8 +760,9 @@ async def criar_caixa(req: Request, session_token: str = Cookie(None)):
     body = await req.json()
     hora = datetime.now().strftime("%H:%M")
     with get_db() as db:
-        db.execute("INSERT INTO caixa (tipo,descricao,categoria,valor,data,hora) VALUES (?,?,?,?,?,?)",
+        db.execute("INSERT INTO caixa (tipo,descricao,categoria,placa,valor_os,forma_pagamento,parcelamento,valor,data,hora) VALUES (?,?,?,?,?,?,?,?,?,?)",
             (body.get('tipo'), body.get('descricao'), body.get('categoria'),
+             body.get('placa'), body.get('valor_os',0), body.get('forma_pagamento'), body.get('parcelamento'),
              body.get('valor', 0), body.get('data'), hora))
         db.commit()
     return {"ok": True}
@@ -1069,8 +1070,9 @@ async def criar_caixa(req: Request, session_token: str = Cookie(None)):
     body = await req.json()
     hora = datetime.now().strftime("%H:%M")
     with get_db() as db:
-        db.execute("INSERT INTO caixa (tipo,descricao,categoria,valor,data,hora) VALUES (?,?,?,?,?,?)",
+        db.execute("INSERT INTO caixa (tipo,descricao,categoria,placa,valor_os,forma_pagamento,parcelamento,valor,data,hora) VALUES (?,?,?,?,?,?,?,?,?,?)",
             (body.get('tipo'), body.get('descricao'), body.get('categoria'),
+             body.get('placa'), body.get('valor_os',0), body.get('forma_pagamento'), body.get('parcelamento'),
              body.get('valor', 0), body.get('data'), hora))
         db.commit()
     return {"ok": True}
