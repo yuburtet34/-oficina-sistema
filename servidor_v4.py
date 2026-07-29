@@ -775,6 +775,16 @@ async def criar_caixa(req: Request, session_token: str = Cookie(None)):
         db.commit()
     return {"ok": True}
 
+
+@app.put("/api/caixa/{caixa_id}")
+async def atualizar_caixa(caixa_id: int, req: Request, session_token: str = Cookie(None)):
+    exigir_admin(session_token)
+    body = await req.json()
+    with get_db() as db:
+        db.execute("UPDATE caixa SET valor=? WHERE id=?", (body.get('valor', 0), caixa_id))
+        db.commit()
+    return {"ok": True}
+
 @app.delete("/api/caixa/{caixa_id}")
 def deletar_caixa(caixa_id: int, session_token: str = Cookie(None)):
     exigir_admin(session_token)
@@ -799,6 +809,16 @@ async def criar_caixa(req: Request, session_token: str = Cookie(None)):
     hora = datetime.now().strftime("%H:%M")
     with get_db() as db:
         db.execute("INSERT INTO caixa (tipo,descricao,categoria,valor,data,hora) VALUES (?,?,?,?,?,?)", (body.get('tipo'), body.get('descricao'), body.get('categoria'), body.get('valor', 0), body.get('data'), hora))
+        db.commit()
+    return {"ok": True}
+
+
+@app.put("/api/caixa/{caixa_id}")
+async def atualizar_caixa(caixa_id: int, req: Request, session_token: str = Cookie(None)):
+    exigir_admin(session_token)
+    body = await req.json()
+    with get_db() as db:
+        db.execute("UPDATE caixa SET valor=? WHERE id=?", (body.get('valor', 0), caixa_id))
         db.commit()
     return {"ok": True}
 
@@ -1109,6 +1129,16 @@ async def criar_caixa(req: Request, session_token: str = Cookie(None)):
         db.commit()
     return {"ok": True}
 
+
+@app.put("/api/caixa/{caixa_id}")
+async def atualizar_caixa(caixa_id: int, req: Request, session_token: str = Cookie(None)):
+    exigir_admin(session_token)
+    body = await req.json()
+    with get_db() as db:
+        db.execute("UPDATE caixa SET valor=? WHERE id=?", (body.get('valor', 0), caixa_id))
+        db.commit()
+    return {"ok": True}
+
 @app.delete("/api/caixa/{caixa_id}")
 def deletar_caixa(caixa_id: int, session_token: str = Cookie(None)):
     exigir_admin(session_token)
@@ -1133,6 +1163,16 @@ async def criar_caixa(req: Request, session_token: str = Cookie(None)):
     hora = datetime.now().strftime("%H:%M")
     with get_db() as db:
         db.execute("INSERT INTO caixa (tipo,descricao,categoria,valor,data,hora) VALUES (?,?,?,?,?,?)", (body.get('tipo'), body.get('descricao'), body.get('categoria'), body.get('valor', 0), body.get('data'), hora))
+        db.commit()
+    return {"ok": True}
+
+
+@app.put("/api/caixa/{caixa_id}")
+async def atualizar_caixa(caixa_id: int, req: Request, session_token: str = Cookie(None)):
+    exigir_admin(session_token)
+    body = await req.json()
+    with get_db() as db:
+        db.execute("UPDATE caixa SET valor=? WHERE id=?", (body.get('valor', 0), caixa_id))
         db.commit()
     return {"ok": True}
 

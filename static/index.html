@@ -1380,7 +1380,7 @@ async function carregarCaixa(data) {
         <td style="font-size:11px">${i.forma_pagamento||''}</td>
         <td style="font-size:11px">${i.parcelamento||''}</td>
         <td style="text-align:right;font-weight:600;color:#15803d">${fmt(i.valor)}</td>
-        <td><button onclick="excluirCaixa(${i.id})" style="padding:3px 8px;border-radius:5px;border:1.5px solid #dc2626;background:#fff;color:#dc2626;font-size:11px;cursor:pointer">✕</button></td>
+        <td style="display:flex;gap:4px"><button onclick="editarCaixa(${i.id},${i.valor})" style="padding:3px 8px;border-radius:5px;border:1.5px solid #2563eb;background:#fff;color:#2563eb;font-size:11px;cursor:pointer">✏️</button><button onclick="excluirCaixa(${i.id})" style="padding:3px 8px;border-radius:5px;border:1.5px solid #dc2626;background:#fff;color:#dc2626;font-size:11px;cursor:pointer">✕</button></td>
       </tr>`).join('') : '<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--text2)">Nenhuma entrada</td></tr>'}</tbody>
       </table>
     </div>
@@ -1400,7 +1400,7 @@ async function carregarCaixa(data) {
         <td style="font-size:11px">${i.forma_pagamento||''}</td>
         <td style="font-size:11px">${i.parcelamento||''}</td>
         <td style="text-align:right;font-weight:600;color:#dc2626">${fmt(i.valor)}</td>
-        <td><button onclick="excluirCaixa(${i.id})" style="padding:3px 8px;border-radius:5px;border:1.5px solid #dc2626;background:#fff;color:#dc2626;font-size:11px;cursor:pointer">✕</button></td>
+        <td style="display:flex;gap:4px"><button onclick="editarCaixa(${i.id},${i.valor})" style="padding:3px 8px;border-radius:5px;border:1.5px solid #2563eb;background:#fff;color:#2563eb;font-size:11px;cursor:pointer">✏️</button><button onclick="excluirCaixa(${i.id})" style="padding:3px 8px;border-radius:5px;border:1.5px solid #dc2626;background:#fff;color:#dc2626;font-size:11px;cursor:pointer">✕</button></td>
       </tr>`).join('') : '<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--text2)">Nenhuma despesa</td></tr>'}</tbody>
       </table>
     </div>`;
@@ -1551,6 +1551,26 @@ async function excluirCaixa(id) {
   carregarCaixa(data);
 }
 
+
+function editarCaixa(id, valorAtual) {
+  document.getElementById('caixa-edit-id').value = id;
+  document.getElementById('caixa-edit-valor').value = valorAtual || '';
+  document.getElementById('modal-caixa-edit').classList.add('open');
+  document.getElementById('caixa-edit-valor').focus();
+}
+
+async function salvarEdicaoCaixa() {
+  var id = document.getElementById('caixa-edit-id').value;
+  var valor = parseFloat(document.getElementById('caixa-edit-valor').value) || 0;
+  if (!valor) { alert('Informe o valor recebido'); return; }
+  try {
+    await api('/caixa/' + id, {method: 'PUT', body: {valor: valor}});
+    fecharModal('modal-caixa-edit');
+    var mes = document.getElementById('caixa-data') ? document.getElementById('caixa-data').value : new Date().toISOString().substring(0,7);
+    carregarCaixa(mes);
+  } catch(e) { alert('Erro ao salvar'); }
+}
+
 </script>
 <div class="modal-overlay" id="modal-caixa">
   <div class="modal" style="max-width:560px">
@@ -1624,5 +1644,26 @@ async function excluirCaixa(id) {
     </div>
   </div>
 </div>
+
+<div class="modal-overlay" id="modal-caixa-edit">
+  <div class="modal" style="max-width:380px">
+    <div class="modal-head">
+      <div class="modal-title">✏️ Editar Valor Recebido</div>
+      <button class="close-btn" onclick="fecharModal('modal-caixa-edit')">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="caixa-edit-id">
+      <div class="form-group">
+        <label style="color:#1d4ed8;font-weight:700">Valor Recebido (R$)</label>
+        <input id="caixa-edit-valor" type="number" min="0" step="0.01" placeholder="0,00" style="font-size:18px;font-weight:700;color:#1d4ed8">
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="fecharModal('modal-caixa-edit')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarEdicaoCaixa()">💾 Salvar</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
