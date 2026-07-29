@@ -1326,6 +1326,7 @@ async function ativar2FA() {
 async function renderCaixa() {
   if (!checkAdmin()) return;
   var hoje = new Date().toISOString().substring(0,7);
+  window._mesCaixa = hoje;
   var el = document.getElementById('page-caixa');
   el.innerHTML = '<div class="page-title">💰 Caixa</div><div style="color:var(--text2)">Carregando...</div>';
   await carregarCaixa(hoje);
@@ -1370,7 +1371,7 @@ async function carregarCaixa(data) {
         <div class="table-title">📥 Entradas</div>
       </div>
       <table><thead><tr><th>Data</th><th>Placa</th><th>Descrição</th><th>Categoria</th><th style="text-align:right">Vlr OS</th><th>Forma Pagto</th><th>Parcelamento</th><th style="text-align:right">Vlr Recebido</th><th></th></tr></thead>
-      <tbody>${d.entradas.length ? d.entradas.map(i=>`<tr>
+      <tbody>${d.entradas.length ? d.entradas.sort((a,b)=>b.data.localeCompare(a.data)).map(i=>`<tr>
         <td class="text2">${i.data||i.hora||''}</td>
         <td class="mono">${i.placa||''}</td>
         <td>${i.descricao}</td>
@@ -1390,7 +1391,7 @@ async function carregarCaixa(data) {
         <div class="table-title">📤 Saídas / Despesas</div>
       </div>
       <table><thead><tr><th>Data</th><th>Placa</th><th>Descrição</th><th>Categoria</th><th style="text-align:right">Vlr OS</th><th>Forma Pagto</th><th>Parcelamento</th><th style="text-align:right">Vlr Recebido</th><th></th></tr></thead>
-      <tbody>${d.saidas.length ? d.saidas.map(i=>`<tr>
+      <tbody>${d.saidas.length ? d.saidas.sort((a,b)=>b.data.localeCompare(a.data)).map(i=>`<tr>
         <td class="text2">${i.data||i.hora||''}</td>
         <td class="mono">${i.placa||''}</td>
         <td>${i.descricao}</td>

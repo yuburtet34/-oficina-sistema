@@ -751,8 +751,8 @@ def listar_caixa(data: str = "", session_token: str = Cookie(None)):
     exigir_admin(session_token)
     with get_db() as db:
         if data:
-            entradas = db.execute("SELECT * FROM caixa WHERE tipo='entrada' AND substr(data,1,7)=? ORDER BY id DESC", (data[:7],)).fetchall()
-            saidas = db.execute("SELECT * FROM caixa WHERE tipo='saida' AND substr(data,1,7)=? ORDER BY id DESC", (data[:7],)).fetchall()
+            entradas = db.execute("SELECT * FROM caixa WHERE tipo='entrada' AND substr(data,1,7)=? ORDER BY data DESC, id DESC", (data[:7],)).fetchall()
+            saidas = db.execute("SELECT * FROM caixa WHERE tipo='saida' AND substr(data,1,7)=? ORDER BY data DESC, id DESC", (data[:7],)).fetchall()
         else:
             hoje = datetime.now().strftime("%Y-%m-%d")
             entradas = db.execute("SELECT * FROM caixa WHERE tipo='entrada' AND data=? ORDER BY id DESC", (hoje,)).fetchall()
@@ -1085,8 +1085,8 @@ def listar_caixa(data: str = "", session_token: str = Cookie(None)):
     exigir_admin(session_token)
     with get_db() as db:
         if data:
-            entradas = db.execute("SELECT * FROM caixa WHERE tipo='entrada' AND substr(data,1,7)=? ORDER BY id DESC", (data[:7],)).fetchall()
-            saidas = db.execute("SELECT * FROM caixa WHERE tipo='saida' AND substr(data,1,7)=? ORDER BY id DESC", (data[:7],)).fetchall()
+            entradas = db.execute("SELECT * FROM caixa WHERE tipo='entrada' AND substr(data,1,7)=? ORDER BY data DESC, id DESC", (data[:7],)).fetchall()
+            saidas = db.execute("SELECT * FROM caixa WHERE tipo='saida' AND substr(data,1,7)=? ORDER BY data DESC, id DESC", (data[:7],)).fetchall()
         else:
             hoje = datetime.now().strftime("%Y-%m-%d")
             entradas = db.execute("SELECT * FROM caixa WHERE tipo='entrada' AND data=? ORDER BY id DESC", (hoje,)).fetchall()
