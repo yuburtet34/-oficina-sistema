@@ -469,6 +469,13 @@ async def atualizar_os(os_id: int, req: Request):
                 body["email_cliente"] = None
             if "telefone_cliente" not in body:
                 body["telefone_cliente"] = None
+            # Sincroniza com caixa
+            _numero = db.execute("SELECT numero,veiculo_placa,veiculo_modelo,data FROM ordens_servico WHERE id=?", (os_id,)).fetchone()
+            if _numero:
+                sincronizar_os_caixa(db, os_id, body.get("status",""), _numero[0], 
+                    body.get("veiculo_placa") or _numero[1], body.get("veiculo_modelo") or _numero[2],
+                    body.get("valor_liquido",0), body.get("forma_pagamento",""), 
+                    body.get("parcelamento",""), body.get("data") or _numero[3])
             if body.get("status") == "FECHADA":
                 body["fechado_em"] = datetime.now().isoformat()
             db.execute("DELETE FROM itens_os WHERE os_id=?", (os_id,))
@@ -551,6 +558,7 @@ def deletar_midia(midia_id: int):
 @app.get("/api/clientes")
 def listar_clientes(busca: str = "", limit: int = 30):
     with get_db() as db:
+        total = db.execute("SELECT COUNT(*) FROM clientes").fetchone()[0]
         if busca:
             rows = db.execute("""
                 SELECT * FROM clientes WHERE nome LIKE ? OR telefone LIKE ? OR cpf LIKE ? OR cnpj LIKE ?
@@ -801,6 +809,30 @@ def deletar_caixa(caixa_id: int, session_token: str = Cookie(None)):
         db.execute("DELETE FROM caixa WHERE id=?", (caixa_id,))
         db.commit()
     return {"ok": True}
+
+
+def sincronizar_os_caixa(db, os_id, status, numero, placa, modelo, valor_liquido, forma_pagamento, parcelamento, data):
+    """Sincroniza OS com tabela caixa automaticamente"""
+    print(f"SYNC OS #{numero} status={status} placa={placa} valor={valor_liquido}")
+    # Remove entrada existente desta OS
+    db.execute("DELETE FROM caixa WHERE descricao=? AND tipo='entrada'", (f'OS #{numero}',))
+    
+    if status == 'FECHADA':
+        # Cria entrada no caixa
+        from datetime import datetime
+        hora = datetime.now().strftime("%H:%M")
+        # Converte data DD/MM/YYYY para YYYY-MM-DD
+        data_fmt = data or ''
+        if data_fmt and '/' in data_fmt:
+            partes = data_fmt.split('/')
+            if len(partes) == 3:
+                data_fmt = f"{partes[2]}-{partes[1]}-{partes[0]}"
+        db.execute("""INSERT INTO caixa 
+            (tipo, descricao, categoria, placa, valor_os, forma_pagamento, parcelamento, valor, data, hora)
+            VALUES ('entrada', ?, 'Pagamento OS', ?, ?, ?, ?, 0, ?, ?)""",
+            (f'OS #{numero}', placa or '', valor_liquido or 0, 
+             forma_pagamento or '', parcelamento or '', data_fmt, hora))
+    db.commit()
 
 # endpoints de login 
 @app.post("/api/login") 
@@ -1111,6 +1143,30 @@ def deletar_caixa(caixa_id: int, session_token: str = Cookie(None)):
         db.execute("DELETE FROM caixa WHERE id=?", (caixa_id,))
         db.commit()
     return {"ok": True}
+
+
+def sincronizar_os_caixa(db, os_id, status, numero, placa, modelo, valor_liquido, forma_pagamento, parcelamento, data):
+    """Sincroniza OS com tabela caixa automaticamente"""
+    print(f"SYNC OS #{numero} status={status} placa={placa} valor={valor_liquido}")
+    # Remove entrada existente desta OS
+    db.execute("DELETE FROM caixa WHERE descricao=? AND tipo='entrada'", (f'OS #{numero}',))
+    
+    if status == 'FECHADA':
+        # Cria entrada no caixa
+        from datetime import datetime
+        hora = datetime.now().strftime("%H:%M")
+        # Converte data DD/MM/YYYY para YYYY-MM-DD
+        data_fmt = data or ''
+        if data_fmt and '/' in data_fmt:
+            partes = data_fmt.split('/')
+            if len(partes) == 3:
+                data_fmt = f"{partes[2]}-{partes[1]}-{partes[0]}"
+        db.execute("""INSERT INTO caixa 
+            (tipo, descricao, categoria, placa, valor_os, forma_pagamento, parcelamento, valor, data, hora)
+            VALUES ('entrada', ?, 'Pagamento OS', ?, ?, ?, ?, 0, ?, ?)""",
+            (f'OS #{numero}', placa or '', valor_liquido or 0, 
+             forma_pagamento or '', parcelamento or '', data_fmt, hora))
+    db.commit()
 
 # endpoints de login 
 

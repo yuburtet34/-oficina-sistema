@@ -1369,7 +1369,7 @@ async function carregarCaixa(data) {
       <div class="table-header">
         <div class="table-title">📥 Entradas</div>
       </div>
-      <table><thead><tr><th>Data</th><th>Placa</th><th>Descrição</th><th>Categoria</th><th style="text-align:right">Vlr OS</th><th>Forma Pagto</th><th style="text-align:right">Vlr Recebido</th><th></th></tr></thead>
+      <table><thead><tr><th>Data</th><th>Placa</th><th>Descrição</th><th>Categoria</th><th style="text-align:right">Vlr OS</th><th>Forma Pagto</th><th>Parcelamento</th><th style="text-align:right">Vlr Recebido</th><th></th></tr></thead>
       <tbody>${d.entradas.length ? d.entradas.map(i=>`<tr>
         <td class="text2">${i.data||i.hora||''}</td>
         <td class="mono">${i.placa||''}</td>
@@ -1377,6 +1377,7 @@ async function carregarCaixa(data) {
         <td><span style="padding:3px 10px;border-radius:20px;font-size:11px;background:#dcfce7;color:#15803d">${i.categoria}</span></td>
         <td style="text-align:right;color:#555">${fmt(i.valor_os||0)}</td>
         <td style="font-size:11px">${i.forma_pagamento||''}</td>
+        <td style="font-size:11px">${i.parcelamento||''}</td>
         <td style="text-align:right;font-weight:600;color:#15803d">${fmt(i.valor)}</td>
         <td><button onclick="excluirCaixa(${i.id})" style="padding:3px 8px;border-radius:5px;border:1.5px solid #dc2626;background:#fff;color:#dc2626;font-size:11px;cursor:pointer">✕</button></td>
       </tr>`).join('') : '<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--text2)">Nenhuma entrada</td></tr>'}</tbody>
@@ -1388,7 +1389,7 @@ async function carregarCaixa(data) {
       <div class="table-header">
         <div class="table-title">📤 Saídas / Despesas</div>
       </div>
-      <table><thead><tr><th>Data</th><th>Placa</th><th>Descrição</th><th>Categoria</th><th style="text-align:right">Vlr OS</th><th>Forma Pagto</th><th style="text-align:right">Vlr Recebido</th><th></th></tr></thead>
+      <table><thead><tr><th>Data</th><th>Placa</th><th>Descrição</th><th>Categoria</th><th style="text-align:right">Vlr OS</th><th>Forma Pagto</th><th>Parcelamento</th><th style="text-align:right">Vlr Recebido</th><th></th></tr></thead>
       <tbody>${d.saidas.length ? d.saidas.map(i=>`<tr>
         <td class="text2">${i.data||i.hora||''}</td>
         <td class="mono">${i.placa||''}</td>
@@ -1396,6 +1397,7 @@ async function carregarCaixa(data) {
         <td><span style="padding:3px 10px;border-radius:20px;font-size:11px;background:#fee2e2;color:#dc2626">${i.categoria}</span></td>
         <td style="text-align:right;color:#555">${fmt(i.valor_os||0)}</td>
         <td style="font-size:11px">${i.forma_pagamento||''}</td>
+        <td style="font-size:11px">${i.parcelamento||''}</td>
         <td style="text-align:right;font-weight:600;color:#dc2626">${fmt(i.valor)}</td>
         <td><button onclick="excluirCaixa(${i.id})" style="padding:3px 8px;border-radius:5px;border:1.5px solid #dc2626;background:#fff;color:#dc2626;font-size:11px;cursor:pointer">✕</button></td>
       </tr>`).join('') : '<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--text2)">Nenhuma despesa</td></tr>'}</tbody>
