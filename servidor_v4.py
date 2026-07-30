@@ -356,7 +356,8 @@ def importar_backup():
 
 # ── API - Dashboard ───────────────────────────────────────────
 @app.get("/api/dashboard")
-def dashboard():
+def dashboard(session_token: str = Cookie(None)):
+    exigir_login(session_token)
     with get_db() as db:
         hoje = datetime.now().strftime("%Y-%m-%d")
         mes  = datetime.now().strftime("%Y-%m")
@@ -377,7 +378,8 @@ def dashboard():
 
 # ── API - Ordens de Serviço ───────────────────────────────────
 @app.get("/api/os")
-def listar_os(busca: str = "", status: str = "", mes: str = "", de: str = "", ate: str = "", limit: int = 50, offset: int = 0):
+def listar_os(busca: str = "", status: str = "", mes: str = "", de: str = "", ate: str = "", limit: int = 50, offset: int = 0, session_token: str = Cookie(None)):
+    exigir_login(session_token)
     with get_db() as db:
         where, params = ["1=1"], []
         if busca:
@@ -402,7 +404,8 @@ def listar_os(busca: str = "", status: str = "", mes: str = "", de: str = "", at
         return {"total": total, "items": [dict(r) for r in rows]}
 
 @app.get("/api/os/{os_id}")
-def detalhe_os(os_id: int):
+def detalhe_os(os_id: int, session_token: str = Cookie(None)):
+    exigir_login(session_token)
     with get_db() as db:
         os = db.execute("SELECT * FROM ordens_servico WHERE id=?", (os_id,)).fetchone()
         if not os:
@@ -411,7 +414,8 @@ def detalhe_os(os_id: int):
         return {**dict(os), "itens": [dict(i) for i in itens]}
 
 @app.post("/api/os")
-async def criar_os(req: Request):
+async def criar_os(req: Request, session_token: str = Cookie(None)):
+    exigir_login(session_token)
     body = await req.json()
     with get_db() as db:
         # Próximo número de OS
@@ -454,7 +458,8 @@ async def criar_os(req: Request):
         return {"id": os_id, "numero": numero}
 
 @app.put("/api/os/{os_id}")
-async def atualizar_os(os_id: int, req: Request):
+async def atualizar_os(os_id: int, req: Request, session_token: str = Cookie(None)):
+    exigir_login(session_token)
     body = await req.json()
     with get_db() as db:
         itens = body.pop("itens", None)
@@ -495,7 +500,8 @@ async def atualizar_os(os_id: int, req: Request):
 
 # ── API - Veículos ────────────────────────────────────────────
 @app.get("/api/veiculos/buscar")
-def buscar_veiculos(q: str = ""):
+def buscar_veiculos(q: str = "", session_token: str = Cookie(None)):
+    exigir_login(session_token)
     q = q.upper().strip()
     if not q or len(q) < 2:
         return []
@@ -513,7 +519,8 @@ def buscar_veiculos(q: str = ""):
 
 # ── API - Clientes ────────────────────────────────────────────
 @app.get("/api/veiculos/{placa}")
-def historico_veiculo(placa: str):
+def historico_veiculo(placa: str, session_token: str = Cookie(None)):
+    exigir_login(session_token)
     placa = placa.upper().replace("-", "")
     with get_db() as db:
         veiculo = db.execute("SELECT * FROM veiculos WHERE placa=?", (placa,)).fetchone()
@@ -531,7 +538,8 @@ def historico_veiculo(placa: str):
 
 # ── API - Mídias (fotos/vídeos) ──────────────────────────────
 @app.post("/api/os/{os_id}/midias")
-async def upload_midia(os_id: int, req: Request):
+async def upload_midia(os_id: int, req: Request, session_token: str = Cookie(None)):
+    exigir_login(session_token)
     import base64
     body = await req.json()
     nome  = body.get("nome", "arquivo")
@@ -543,20 +551,23 @@ async def upload_midia(os_id: int, req: Request):
     return {"ok": True}
 
 @app.get("/api/os/{os_id}/midias")
-def listar_midias(os_id: int):
+def listar_midias(os_id: int, session_token: str = Cookie(None)):
+    exigir_login(session_token)
     with get_db() as db:
         rows = db.execute("SELECT id, nome, tipo, dados, criado_em FROM os_midias WHERE os_id=? ORDER BY id", (os_id,)).fetchall()
         return [dict(r) for r in rows]
 
 @app.delete("/api/midias/{midia_id}")
-def deletar_midia(midia_id: int):
+def deletar_midia(midia_id: int, session_token: str = Cookie(None)):
+    exigir_login(session_token)
     with get_db() as db:
         db.execute("DELETE FROM os_midias WHERE id=?", (midia_id,))
     return {"ok": True}
 
 # ── API - Autocomplete veículos ──────────────────────────────
 @app.get("/api/clientes")
-def listar_clientes(busca: str = "", limit: int = 30):
+def listar_clientes(busca: str = "", limit: int = 30, session_token: str = Cookie(None)):
+    exigir_login(session_token)
     with get_db() as db:
         total = db.execute("SELECT COUNT(*) FROM clientes").fetchone()[0]
         if busca:
@@ -565,12 +576,13 @@ def listar_clientes(busca: str = "", limit: int = 30):
                 ORDER BY nome LIMIT ?
             """, (f"%{busca}%", f"%{busca}%", f"%{busca}%", f"%{busca}%", limit)).fetchall()
         else:
-            rows = db.execute("SELECT * FROM clientes ORDER BY nome LIMIT ?", (limit, offset)).fetchall()
+            rows = db.execute("SELECT * FROM clientes ORDER BY nome LIMIT ?", (limit,)).fetchall()
         return {"total": total, "items": [dict(r) for r in rows]}
 
 # ── API - Produtos ────────────────────────────────────────────
 @app.get("/api/produtos")
-def listar_produtos(busca: str = "", limit: int = 50, offset: int = 0):
+def listar_produtos(busca: str = "", limit: int = 50, offset: int = 0, session_token: str = Cookie(None)):
+    exigir_login(session_token)
     with get_db() as db:
         if busca:
             total = db.execute("SELECT COUNT(*) FROM produtos WHERE nome LIKE ? OR codigo LIKE ?", (f"%{busca}%", f"%{busca}%")).fetchone()[0]
@@ -587,7 +599,8 @@ def listar_produtos(busca: str = "", limit: int = 50, offset: int = 0):
 
 
 @app.post("/api/produtos")
-async def criar_produto(req: Request):
+async def criar_produto(req: Request, session_token: str = Cookie(None)):
+    exigir_login(session_token)
     body = await req.json()
     with get_db() as db:
         db.execute("""INSERT INTO produtos (codigo, nome, valor_venda, qt_estoque, qt_minima)
@@ -599,7 +612,8 @@ async def criar_produto(req: Request):
     return {"ok": True, "id": id_novo}
 
 @app.get("/api/produtos/{produto_id}")
-def get_produto(produto_id: int):
+def get_produto(produto_id: int, session_token: str = Cookie(None)):
+    exigir_login(session_token)
     with get_db() as db:
         row = db.execute("SELECT * FROM produtos WHERE id=?", (produto_id,)).fetchone()
         if not row:
@@ -608,7 +622,8 @@ def get_produto(produto_id: int):
         return dict(row)
 
 @app.put("/api/produtos/{produto_id}")
-async def atualizar_produto(produto_id: int, req: Request):
+async def atualizar_produto(produto_id: int, req: Request, session_token: str = Cookie(None)):
+    exigir_login(session_token)
     body = await req.json()
     with get_db() as db:
         db.execute("""UPDATE produtos SET
@@ -620,7 +635,8 @@ async def atualizar_produto(produto_id: int, req: Request):
     return {"ok": True}
 
 @app.delete("/api/produtos/{produto_id}")
-def deletar_produto(produto_id: int):
+def deletar_produto(produto_id: int, session_token: str = Cookie(None)):
+    exigir_login(session_token)
     with get_db() as db:
         db.execute("DELETE FROM produtos WHERE id=?", (produto_id,))
         db.commit()
@@ -628,7 +644,8 @@ def deletar_produto(produto_id: int):
 
 
 @app.get("/api/usuarios/{usuario_id}")
-def get_usuario(usuario_id: int):
+def get_usuario(usuario_id: int, session_token: str = Cookie(None)):
+    exigir_admin(session_token)
     with get_db() as db:
         row = db.execute("SELECT id,usuario,nome,perfil,ativo FROM usuarios WHERE id=?", (usuario_id,)).fetchone()
         if not row:
@@ -637,7 +654,8 @@ def get_usuario(usuario_id: int):
         return dict(row)
 
 @app.post("/api/usuarios")
-async def criar_usuario(req: Request):
+async def criar_usuario(req: Request, session_token: str = Cookie(None)):
+    exigir_admin(session_token)
     body = await req.json()
     senha = body.get('senha','')
     if not senha or len(senha) < 8:
@@ -650,7 +668,8 @@ async def criar_usuario(req: Request):
     return {"ok": True}
 
 @app.put("/api/usuarios/{usuario_id}")
-async def atualizar_usuario(usuario_id: int, req: Request):
+async def atualizar_usuario(usuario_id: int, req: Request, session_token: str = Cookie(None)):
+    exigir_admin(session_token)
     body = await req.json()
     with get_db() as db:
         if body.get('senha'):
@@ -772,43 +791,6 @@ async def criar_caixa(req: Request, session_token: str = Cookie(None)):
             (body.get('tipo'), body.get('descricao'), body.get('categoria'),
              body.get('placa'), body.get('valor_os',0), body.get('forma_pagamento'), body.get('parcelamento'),
              body.get('valor', 0), body.get('data'), hora))
-        db.commit()
-    return {"ok": True}
-
-
-@app.put("/api/caixa/{caixa_id}")
-async def atualizar_caixa(caixa_id: int, req: Request, session_token: str = Cookie(None)):
-    exigir_admin(session_token)
-    body = await req.json()
-    with get_db() as db:
-        db.execute("UPDATE caixa SET valor=? WHERE id=?", (body.get('valor', 0), caixa_id))
-        db.commit()
-    return {"ok": True}
-
-@app.delete("/api/caixa/{caixa_id}")
-def deletar_caixa(caixa_id: int, session_token: str = Cookie(None)):
-    exigir_admin(session_token)
-    with get_db() as db:
-        db.execute("DELETE FROM caixa WHERE id=?", (caixa_id,))
-        db.commit()
-    return {"ok": True}
-
-@app.get("/api/caixa")
-def listar_caixa(data: str = "", session_token: str = Cookie(None)):
-    exigir_admin(session_token)
-    with get_db() as db:
-        if not data: data = datetime.now().strftime("%Y-%m-%d")
-        entradas = db.execute("SELECT * FROM caixa WHERE tipo='entrada' AND (data=? OR substr(data,1,7)=?) ORDER BY id DESC", (data,data)).fetchall()
-        saidas = db.execute("SELECT * FROM caixa WHERE tipo='saida' AND (data=? OR substr(data,1,7)=?) ORDER BY id DESC", (data,data)).fetchall()
-        return {"entradas": [dict(r) for r in entradas], "saidas": [dict(r) for r in saidas]}
-
-@app.post("/api/caixa")
-async def criar_caixa(req: Request, session_token: str = Cookie(None)):
-    exigir_admin(session_token)
-    body = await req.json()
-    hora = datetime.now().strftime("%H:%M")
-    with get_db() as db:
-        db.execute("INSERT INTO caixa (tipo,descricao,categoria,valor,data,hora) VALUES (?,?,?,?,?,?)", (body.get('tipo'), body.get('descricao'), body.get('categoria'), body.get('valor', 0), body.get('data'), hora))
         db.commit()
     return {"ok": True}
 
@@ -939,274 +921,3 @@ if __name__ == "__main__":
 ╚══════════════════════════════════════════════════╝
 """)
     uvicorn.run(app, host="0.0.0.0", port=8000, log_level="warning")
-
-@app.post("/api/produtos")
-async def criar_produto(req: Request):
-    body = await req.json()
-    with get_db() as db:
-        db.execute("""INSERT INTO produtos (codigo, nome, valor_venda, qt_estoque, qt_minima)
-            VALUES (?,?,?,?,?)""",
-            (body.get('codigo'), body.get('nome'), body.get('valor_venda',0),
-             body.get('qt_estoque',0), body.get('qt_minima',0)))
-        db.commit()
-        id_novo = db.execute("SELECT last_insert_rowid()").fetchone()[0]
-    return {"ok": True, "id": id_novo}
-
-@app.get("/api/produtos/{produto_id}")
-def get_produto(produto_id: int):
-    with get_db() as db:
-        row = db.execute("SELECT * FROM produtos WHERE id=?", (produto_id,)).fetchone()
-        if not row:
-            from fastapi import HTTPException
-            raise HTTPException(status_code=404, detail="Produto não encontrado")
-        return dict(row)
-
-@app.put("/api/produtos/{produto_id}")
-async def atualizar_produto(produto_id: int, req: Request):
-    body = await req.json()
-    with get_db() as db:
-        db.execute("""UPDATE produtos SET
-            codigo=?, nome=?, valor_venda=?, qt_estoque=?, qt_minima=?
-            WHERE id=?""",
-            (body.get('codigo'), body.get('nome'), body.get('valor_venda',0),
-             body.get('qt_estoque',0), body.get('qt_minima',0), produto_id))
-        db.commit()
-    return {"ok": True}
-
-@app.delete("/api/produtos/{produto_id}")
-def deletar_produto(produto_id: int):
-    with get_db() as db:
-        db.execute("DELETE FROM produtos WHERE id=?", (produto_id,))
-        db.commit()
-    return {"ok": True}
-
-
-@app.get("/api/usuarios/{usuario_id}")
-def get_usuario(usuario_id: int):
-    with get_db() as db:
-        row = db.execute("SELECT id,usuario,nome,perfil,ativo FROM usuarios WHERE id=?", (usuario_id,)).fetchone()
-        if not row:
-            from fastapi import HTTPException
-            raise HTTPException(status_code=404, detail="Usuário não encontrado")
-        return dict(row)
-
-@app.post("/api/usuarios")
-async def criar_usuario(req: Request):
-    body = await req.json()
-    senha = body.get('senha','')
-    if not senha or len(senha) < 8:
-        raise HTTPException(400, 'Senha deve ter no minimo 8 caracteres')
-    senha_hash = bcrypt.hashpw(senha.encode(), bcrypt.gensalt()).decode()
-    with get_db() as db:
-        db.execute("INSERT INTO usuarios (usuario,senha_hash,nome,perfil,ativo) VALUES (?,?,?,?,?)",
-            (body.get('usuario'), senha_hash, body.get('nome'), body.get('perfil','funcionario'), 1 if body.get('ativo') else 0))
-        db.commit()
-    return {"ok": True}
-
-@app.put("/api/usuarios/{usuario_id}")
-async def atualizar_usuario(usuario_id: int, req: Request):
-    body = await req.json()
-    with get_db() as db:
-        if body.get('senha'):
-            if len(body['senha']) < 8:
-                raise HTTPException(400, 'Senha deve ter no minimo 8 caracteres')
-            senha_hash = bcrypt.hashpw(body['senha'].encode(), bcrypt.gensalt()).decode()
-            db.execute("UPDATE usuarios SET usuario=?,nome=?,perfil=?,ativo=?,senha_hash=? WHERE id=?",
-                (body.get('usuario'), body.get('nome'), body.get('perfil','funcionario'),
-                 1 if body.get('ativo') else 0, senha_hash, usuario_id))
-        else:
-            db.execute("UPDATE usuarios SET usuario=?,nome=?,perfil=?,ativo=? WHERE id=?",
-                (body.get('usuario'), body.get('nome'), body.get('perfil','funcionario'),
-                 1 if body.get('ativo') else 0, usuario_id))
-        db.commit()
-    return {"ok": True}
-
-
-@app.get("/api/2fa/setup")
-def setup_2fa(session_token: str = Cookie(None)):
-    user = get_usuario_atual(session_token)
-    if not user:
-        raise HTTPException(401, "Nao autenticado")
-    secret = pyotp.random_base32()
-    totp = pyotp.TOTP(secret)
-    uri = totp.provisioning_uri(name=user["usuario"], issuer_name="Alta Performance")
-    qr = qrcode.make(uri)
-    buf = io.BytesIO()
-    qr.save(buf, format="PNG")
-    qr_b64 = base64.b64encode(buf.getvalue()).decode()
-    with get_db() as db:
-        db.execute("UPDATE usuarios SET totp_secret=? WHERE id=?", (secret, user["id"]))
-        db.commit()
-    return {"qr": qr_b64, "secret": secret}
-
-@app.post("/api/2fa/ativar")
-async def ativar_2fa(session_token: str = Cookie(None), req: Request = None):
-    user = get_usuario_atual(session_token)
-    if not user:
-        raise HTTPException(401, "Nao autenticado")
-    body = await req.json()
-    codigo = body.get("codigo", "")
-    with get_db() as db:
-        row = db.execute("SELECT totp_secret FROM usuarios WHERE id=?", (user["id"],)).fetchone()
-    if not row or not row["totp_secret"]:
-        raise HTTPException(400, "Configure o 2FA primeiro")
-    totp = pyotp.TOTP(row["totp_secret"])
-    if not totp.verify(codigo):
-        raise HTTPException(400, "Codigo invalido")
-    with get_db() as db:
-        db.execute("UPDATE usuarios SET totp_ativo=1 WHERE id=?", (user["id"],))
-        db.commit()
-    return {"ok": True}
-
-@app.post("/api/2fa/verificar")
-async def verificar_2fa(req: Request):
-    body = await req.json()
-    usuario = body.get("usuario", "")
-    codigo = body.get("codigo", "")
-    with get_db() as db:
-        row = db.execute("SELECT * FROM usuarios WHERE usuario=? AND ativo=1", (usuario,)).fetchone()
-    if not row or not row["totp_secret"]:
-        raise HTTPException(400, "2FA nao configurado")
-    totp = pyotp.TOTP(row["totp_secret"])
-    if not totp.verify(codigo):
-        raise HTTPException(401, "Codigo 2FA invalido")
-    # Cria sessao apos verificacao 2FA
-    import secrets as _secrets
-    token = _secrets.token_hex(32)
-    with get_db() as db:
-        db.execute("INSERT INTO sessoes (token,usuario_id,expira_em) VALUES (?,?,datetime('now','localtime','+7 days'))", (token, row["id"]))
-        db.commit()
-    resp = JSONResponse({"ok": True, "nome": row["nome"], "perfil": row["perfil"]})
-    resp.set_cookie("session_token", token, httponly=True, max_age=604800, samesite="none", secure=True)
-    return resp
-
-@app.post("/api/2fa/desativar")
-async def desativar_2fa(session_token: str = Cookie(None), req: Request = None):
-    user = get_usuario_atual(session_token)
-    if not user:
-        raise HTTPException(401, "Nao autenticado")
-    body = await req.json()
-    codigo = body.get("codigo", "")
-    with get_db() as db:
-        row = db.execute("SELECT totp_secret FROM usuarios WHERE id=?", (user["id"],)).fetchone()
-    if not row or not row["totp_secret"]:
-        raise HTTPException(400, "2FA nao ativado")
-    totp = pyotp.TOTP(row["totp_secret"])
-    if not totp.verify(codigo):
-        raise HTTPException(401, "Codigo invalido")
-    with get_db() as db:
-        db.execute("UPDATE usuarios SET totp_ativo=0, totp_secret=NULL WHERE id=?", (user["id"],))
-        db.commit()
-    return {"ok": True}
-
-
-@app.get("/api/caixa")
-def listar_caixa(data: str = "", session_token: str = Cookie(None)):
-    exigir_admin(session_token)
-    with get_db() as db:
-        if data:
-            entradas = db.execute("SELECT * FROM caixa WHERE tipo='entrada' AND substr(data,1,7)=? ORDER BY data DESC, id DESC", (data[:7],)).fetchall()
-            saidas = db.execute("SELECT * FROM caixa WHERE tipo='saida' AND substr(data,1,7)=? ORDER BY data DESC, id DESC", (data[:7],)).fetchall()
-        else:
-            hoje = datetime.now().strftime("%Y-%m-%d")
-            entradas = db.execute("SELECT * FROM caixa WHERE tipo='entrada' AND data=? ORDER BY id DESC", (hoje,)).fetchall()
-            saidas = db.execute("SELECT * FROM caixa WHERE tipo='saida' AND data=? ORDER BY id DESC", (hoje,)).fetchall()
-        return {
-            "entradas": [dict(r) for r in entradas],
-            "saidas": [dict(r) for r in saidas]
-        }
-
-@app.post("/api/caixa")
-async def criar_caixa(req: Request, session_token: str = Cookie(None)):
-    exigir_admin(session_token)
-    body = await req.json()
-    hora = datetime.now().strftime("%H:%M")
-    with get_db() as db:
-        db.execute("INSERT INTO caixa (tipo,descricao,categoria,placa,valor_os,forma_pagamento,parcelamento,valor,data,hora) VALUES (?,?,?,?,?,?,?,?,?,?)",
-            (body.get('tipo'), body.get('descricao'), body.get('categoria'),
-             body.get('placa'), body.get('valor_os',0), body.get('forma_pagamento'), body.get('parcelamento'),
-             body.get('valor', 0), body.get('data'), hora))
-        db.commit()
-    return {"ok": True}
-
-
-@app.put("/api/caixa/{caixa_id}")
-async def atualizar_caixa(caixa_id: int, req: Request, session_token: str = Cookie(None)):
-    exigir_admin(session_token)
-    body = await req.json()
-    with get_db() as db:
-        db.execute("UPDATE caixa SET valor=? WHERE id=?", (body.get('valor', 0), caixa_id))
-        db.commit()
-    return {"ok": True}
-
-@app.delete("/api/caixa/{caixa_id}")
-def deletar_caixa(caixa_id: int, session_token: str = Cookie(None)):
-    exigir_admin(session_token)
-    with get_db() as db:
-        db.execute("DELETE FROM caixa WHERE id=?", (caixa_id,))
-        db.commit()
-    return {"ok": True}
-
-@app.get("/api/caixa")
-def listar_caixa(data: str = "", session_token: str = Cookie(None)):
-    exigir_admin(session_token)
-    with get_db() as db:
-        if not data: data = datetime.now().strftime("%Y-%m-%d")
-        entradas = db.execute("SELECT * FROM caixa WHERE tipo='entrada' AND (data=? OR substr(data,1,7)=?) ORDER BY id DESC", (data,data)).fetchall()
-        saidas = db.execute("SELECT * FROM caixa WHERE tipo='saida' AND (data=? OR substr(data,1,7)=?) ORDER BY id DESC", (data,data)).fetchall()
-        return {"entradas": [dict(r) for r in entradas], "saidas": [dict(r) for r in saidas]}
-
-@app.post("/api/caixa")
-async def criar_caixa(req: Request, session_token: str = Cookie(None)):
-    exigir_admin(session_token)
-    body = await req.json()
-    hora = datetime.now().strftime("%H:%M")
-    with get_db() as db:
-        db.execute("INSERT INTO caixa (tipo,descricao,categoria,valor,data,hora) VALUES (?,?,?,?,?,?)", (body.get('tipo'), body.get('descricao'), body.get('categoria'), body.get('valor', 0), body.get('data'), hora))
-        db.commit()
-    return {"ok": True}
-
-
-@app.put("/api/caixa/{caixa_id}")
-async def atualizar_caixa(caixa_id: int, req: Request, session_token: str = Cookie(None)):
-    exigir_admin(session_token)
-    body = await req.json()
-    with get_db() as db:
-        db.execute("UPDATE caixa SET valor=? WHERE id=?", (body.get('valor', 0), caixa_id))
-        db.commit()
-    return {"ok": True}
-
-@app.delete("/api/caixa/{caixa_id}")
-def deletar_caixa(caixa_id: int, session_token: str = Cookie(None)):
-    exigir_admin(session_token)
-    with get_db() as db:
-        db.execute("DELETE FROM caixa WHERE id=?", (caixa_id,))
-        db.commit()
-    return {"ok": True}
-
-
-def sincronizar_os_caixa(db, os_id, status, numero, placa, modelo, valor_liquido, forma_pagamento, parcelamento, data):
-    """Sincroniza OS com tabela caixa automaticamente"""
-    print(f"SYNC OS #{numero} status={status} placa={placa} valor={valor_liquido}")
-    # Remove entrada existente desta OS
-    db.execute("DELETE FROM caixa WHERE descricao=? AND tipo='entrada'", (f'OS #{numero}',))
-    
-    if status == 'FECHADA':
-        # Cria entrada no caixa
-        from datetime import datetime
-        hora = datetime.now().strftime("%H:%M")
-        # Converte data DD/MM/YYYY para YYYY-MM-DD
-        data_fmt = data or ''
-        if data_fmt and '/' in data_fmt:
-            partes = data_fmt.split('/')
-            if len(partes) == 3:
-                data_fmt = f"{partes[2]}-{partes[1]}-{partes[0]}"
-        db.execute("""INSERT INTO caixa 
-            (tipo, descricao, categoria, placa, valor_os, forma_pagamento, parcelamento, valor, data, hora)
-            VALUES ('entrada', ?, 'Pagamento OS', ?, ?, ?, ?, 0, ?, ?)""",
-            (f'OS #{numero}', placa or '', valor_liquido or 0, 
-             forma_pagamento or '', parcelamento or '', data_fmt, hora))
-    db.commit()
-
-# endpoints de login 
-
