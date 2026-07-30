@@ -1685,5 +1685,84 @@ async function salvarEdicaoCaixa() {
   </div>
 </div>
 
+
+<div class="modal-overlay" id="modal-produto">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-head">
+      <div class="modal-title">Produto</div>
+      <button class="close-btn" onclick="fecharModal('modal-produto')">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="prod-id">
+      <div class="form-group"><label>Código</label><input id="prod-codigo" placeholder="Código do produto"></div>
+      <div class="form-group"><label>Nome</label><input id="prod-nome" placeholder="Nome do produto"></div>
+      <div class="form-group"><label>Valor Venda (R$)</label><input id="prod-valor" type="number" min="0" step="0.01" placeholder="0,00"></div>
+      <div class="form-group"><label>Estoque Atual</label><input id="prod-estoque" type="number" min="0" placeholder="0"></div>
+      <div class="form-group"><label>Estoque Mínimo</label><input id="prod-minimo" type="number" min="0" placeholder="0"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="fecharModal('modal-produto')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarProduto()">💾 Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-usuario">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-head">
+      <div class="modal-title">Usuário</div>
+      <button class="close-btn" onclick="fecharModal('modal-usuario')">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="usu-id">
+      <div class="form-group"><label>Login</label><input id="usu-login" placeholder="Login do usuário"></div>
+      <div class="form-group"><label>Nome</label><input id="usu-nome" placeholder="Nome completo"></div>
+      <div class="form-group">
+        <label>Senha (deixe em branco para manter)</label>
+        <div style="position:relative"><input id="usu-senha" type="password" placeholder="Nova senha" style="width:100%;padding-right:40px"><button type="button" onclick="var i=document.getElementById('usu-senha');i.type=i.type==='password'?'text':'password';this.textContent=i.type==='password'?'👁️':'🙈'" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;padding:4px">👁️</button></div>
+      </div>
+      <div class="form-group"><label>Perfil</label><select id="usu-perfil"><option value="admin">Administrador</option><option value="funcionario">Funcionário</option></select></div>
+      <div class="form-group"><label>Status</label><select id="usu-ativo"><option value="1">Ativo</option><option value="0">Inativo</option></select></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="fecharModal('modal-usuario')">Cancelar</button>
+      <button class="btn btn-ghost" onclick="fecharModal('modal-usuario');setup2FA()" style="background:#f59e0b;color:#fff;border:none">🔐 Configurar 2FA</button>
+      <button class="btn btn-primary" onclick="salvarUsuario()">💾 Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div id="overlay-2fa" style="display:none;position:fixed;inset:0;background:rgba(15,30,60,.85);z-index:9999;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:14px;padding:32px;max-width:360px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+    <h2 style="font-size:18px;font-weight:800;color:#1a3a6b;margin-bottom:8px;text-align:center">🔐 Verificação 2FA</h2>
+    <p style="font-size:13px;color:#4a5568;text-align:center;margin-bottom:20px">Abra o Google Authenticator e digite o código de 6 dígitos</p>
+    <input id="2fa-codigo" type="text" maxlength="6" placeholder="000000" style="width:100%;padding:14px;font-size:24px;text-align:center;border:2px solid #cbd5e0;border-radius:8px;letter-spacing:8px;margin-bottom:12px;outline:none">
+    <div id="2fa-erro" style="display:none;color:#dc2626;font-size:12px;margin-bottom:12px;text-align:center"></div>
+    <button onclick="verificar2FA()" style="width:100%;padding:12px;background:#1a3a6b;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer">Verificar</button>
+    <button onclick="document.getElementById('overlay-2fa').style.display='none';document.getElementById('login-overlay').style.display='flex'" style="width:100%;padding:10px;background:transparent;color:#4a5568;border:none;font-size:13px;cursor:pointer;margin-top:8px">← Voltar</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-2fa-setup">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-head">
+      <div class="modal-title">🔐 Configurar 2FA</div>
+      <button class="close-btn" onclick="fecharModal('modal-2fa-setup')">×</button>
+    </div>
+    <div class="modal-body" style="text-align:center">
+      <p style="margin-bottom:16px;color:#4a5568;font-size:13px">Escaneie o QR Code com o Google Authenticator</p>
+      <img id="2fa-qr" src="" style="width:200px;height:200px;margin-bottom:16px;border:1px solid #e2e8f0;border-radius:8px">
+      <p style="font-size:11px;color:#888;margin-bottom:4px">Ou insira o código manualmente:</p>
+      <p id="2fa-secret-text" style="font-family:monospace;font-size:13px;background:#f5f5f5;padding:8px;border-radius:6px;margin-bottom:16px;word-break:break-all"></p>
+      <p style="font-size:13px;color:#4a5568;margin-bottom:8px">Após escanear, digite o código gerado para confirmar:</p>
+      <input id="2fa-ativar-codigo" type="text" maxlength="6" placeholder="000000" style="width:150px;padding:10px;font-size:20px;text-align:center;border:2px solid #cbd5e0;border-radius:8px;letter-spacing:6px">
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="fecharModal('modal-2fa-setup')">Cancelar</button>
+      <button class="btn btn-primary" onclick="ativar2FA()">✅ Ativar 2FA</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html> 
