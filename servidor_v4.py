@@ -127,7 +127,7 @@ def exigir_admin(t=None):
     return u
 def exigir_caixa(t=None):
     u=exigir_login(t)
-    if u["perfil"] not in ("admin","caixa"): raise HTTPException(403,"Acesso restrito")
+    if u["perfil"] not in ("admin","caixa","atendimento"): raise HTTPException(403,"Acesso restrito")
     return u
 def criar_admin_padrao(): 
     with get_db() as db: 

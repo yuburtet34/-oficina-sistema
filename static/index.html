@@ -136,7 +136,7 @@
     </nav>
     <div style="padding:12px 20px;border-top:1px solid rgba(255,255,255,.15)">
       <div id="sidebar-user-nome" style="color:#fff;font-size:13px;font-weight:600;margin-bottom:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></div>
-      <div onclick="abrirTrocarSenha()" style="color:rgba(255,255,255,.75);font-size:12px;cursor:pointer;text-decoration:underline;margin-bottom:12px">🔑 Trocar senha</div>
+      <button onclick="abrirEditarPerfil()" style="width:100%;padding:7px;border-radius:6px;background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.25);font-size:12px;font-weight:600;cursor:pointer;margin-bottom:8px">✏️ Editar Perfil</button>
       <button onclick="fazerLogout()" style="width:100%;padding:8px;border-radius:6px;background:#dc2626;color:#fff;border:none;font-size:13px;font-weight:600;cursor:pointer">Sair</button>
     </div>
   </div>
@@ -1140,15 +1140,16 @@ function irPagProd(){
 }
 function aplicarPermissoes() {
   var isAdmin = window.userPerfil === 'admin';
-  var isCaixa = window.userPerfil === 'caixa';
+  var temCaixa = ['admin','caixa','atendimento'].includes(window.userPerfil);
   var navUsuarios = document.getElementById('nav-usuarios');
   if (navUsuarios) navUsuarios.style.display = isAdmin ? 'flex' : 'none';
   var navCaixa = document.getElementById('nav-caixa');
-  if (navCaixa) navCaixa.style.display = (isAdmin || isCaixa) ? 'flex' : 'none';
+  if (navCaixa) navCaixa.style.display = temCaixa ? 'flex' : 'none';
   var sidebarNome = document.getElementById('sidebar-user-nome');
   if (sidebarNome) sidebarNome.textContent = window.userName || '';
 }
-function abrirTrocarSenha() {
+function abrirEditarPerfil() {
+  document.getElementById('perfil-nome').value = window.userName || '';
   document.getElementById('tsenha-atual').value = '';
   document.getElementById('tsenha-nova').value = '';
   document.getElementById('tsenha-confirma').value = '';
@@ -1746,10 +1747,12 @@ async function salvarEdicaoCaixa() {
 <div class="modal-overlay" id="modal-trocar-senha">
   <div class="modal" style="max-width:420px">
     <div class="modal-head">
-      <div class="modal-title">🔑 Trocar Senha</div>
+      <div class="modal-title">✏️ Editar Perfil</div>
       <button class="close-btn" onclick="fecharModal('modal-trocar-senha')">×</button>
     </div>
     <div class="modal-body">
+      <div class="form-group"><label>Nome do usuário</label><input id="perfil-nome" disabled style="background:#f1f5f9;color:#334155"></div>
+      <div style="font-weight:700;font-size:13px;color:#334155;margin:18px 0 10px;border-top:1px solid var(--border);padding-top:14px">🔑 Trocar senha</div>
       <div id="trocar-senha-erro" style="display:none;background:#fee2e2;color:#dc2626;padding:8px 12px;border-radius:6px;font-size:12px;margin-bottom:12px"></div>
       <div class="form-group"><label>Senha atual</label><input id="tsenha-atual" type="password" placeholder="Senha atual"></div>
       <div class="form-group"><label>Nova senha</label><input id="tsenha-nova" type="password" placeholder="Mínimo 8 caracteres"></div>
@@ -1757,7 +1760,7 @@ async function salvarEdicaoCaixa() {
     </div>
     <div class="modal-foot">
       <button class="btn btn-ghost" onclick="fecharModal('modal-trocar-senha')">Cancelar</button>
-      <button class="btn btn-primary" onclick="salvarTrocarSenha()">💾 Salvar</button>
+      <button class="btn btn-primary" onclick="salvarTrocarSenha()">💾 Salvar senha</button>
     </div>
   </div>
 </div>
