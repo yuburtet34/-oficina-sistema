@@ -859,6 +859,28 @@ def sincronizar_os_caixa(db, os_id, status, numero, placa, modelo, valor_liquido
     db.commit()
 
 # endpoints de login 
+@app.post("/api/emergencia/resetar-senha")
+async def emergencia_resetar_senha(req: Request):
+    token_esperado = _os.environ.get("EMERGENCY_RESET_TOKEN")
+    if not token_esperado:
+        raise HTTPException(404, "Nao encontrado")
+    body = await req.json()
+    if body.get("token") != token_esperado:
+        raise HTTPException(403, "Token invalido")
+    usuario = body.get("usuario", "")
+    nova_senha = body.get("nova_senha", "")
+    if not nova_senha or len(nova_senha) < 8:
+        raise HTTPException(400, "Nova senha deve ter no minimo 8 caracteres")
+    novo_hash = bcrypt.hashpw(nova_senha.encode(), bcrypt.gensalt()).decode()
+    with get_db() as db:
+        cur = db.execute(
+            "UPDATE usuarios SET senha_hash=?, totp_ativo=0, totp_secret=NULL, ativo=1 WHERE usuario=?",
+            (novo_hash, usuario))
+        db.commit()
+        if cur.rowcount == 0:
+            raise HTTPException(404, "Usuario nao encontrado")
+    return {"ok": True}
+
 @app.post("/api/login") 
 async def login(req: Request): 
     ip = req.headers.get('x-forwarded-for', req.client.host if req.client else 'unknown').split(',')[0].strip()
