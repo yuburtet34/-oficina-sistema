@@ -231,6 +231,16 @@ def init_db():
             CREATE INDEX IF NOT EXISTS idx_veiculo_placa ON veiculos(placa);
         CREATE TABLE IF NOT EXISTS caixa (id INTEGER PRIMARY KEY AUTOINCREMENT,tipo TEXT NOT NULL,descricao TEXT NOT NULL,categoria TEXT,placa TEXT,valor_os REAL DEFAULT 0,desconto REAL DEFAULT 0,forma_pagamento TEXT,valor REAL DEFAULT 0,data TEXT,hora TEXT,criado_em TEXT DEFAULT (datetime('now','localtime')));
         """)
+        # Migracao defensiva: adiciona colunas que podem faltar em bancos criados
+        # por versoes antigas do CREATE TABLE (evita 500 no login/caixa)
+        cols_usuarios = {r[1] for r in db.execute("PRAGMA table_info(usuarios)").fetchall()}
+        if "totp_secret" not in cols_usuarios:
+            db.execute("ALTER TABLE usuarios ADD COLUMN totp_secret TEXT")
+        if "totp_ativo" not in cols_usuarios:
+            db.execute("ALTER TABLE usuarios ADD COLUMN totp_ativo INTEGER DEFAULT 0")
+        cols_caixa = {r[1] for r in db.execute("PRAGMA table_info(caixa)").fetchall()}
+        if "parcelamento" not in cols_caixa:
+            db.execute("ALTER TABLE caixa ADD COLUMN parcelamento TEXT")
     print("✅ Banco de dados iniciado")
     criar_admin_padrao()
 
