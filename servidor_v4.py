@@ -657,6 +657,14 @@ def deletar_produto(produto_id: int, session_token: str = Cookie(None)):
     return {"ok": True}
 
 
+@app.post("/api/usuarios/{usuario_id}/2fa/desativar")
+def admin_desativar_2fa(usuario_id: int, session_token: str = Cookie(None)):
+    exigir_admin(session_token)
+    with get_db() as db:
+        db.execute("UPDATE usuarios SET totp_ativo=0, totp_secret=NULL WHERE id=?", (usuario_id,))
+        db.commit()
+    return {"ok": True}
+
 @app.get("/api/usuarios/{usuario_id}")
 def get_usuario(usuario_id: int, session_token: str = Cookie(None)):
     exigir_admin(session_token)

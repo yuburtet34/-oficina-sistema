@@ -1268,6 +1268,14 @@ function novoUsuario() {
   document.getElementById('modal-usuario').classList.add('open');
 }
 
+async function adminDesativar2FA() {
+  var id = document.getElementById('usu-id').value;
+  if (!id) { alert('Salve o usuário primeiro antes de desativar o 2FA dele.'); return; }
+  if (!confirm('Desativar o 2FA deste usuário? Ele vai poder logar só com usuário e senha até configurar de novo.')) return;
+  var r = await fetch('/api/usuarios/' + id + '/2fa/desativar', {method: 'POST'});
+  if (r.ok) { alert('2FA desativado para este usuário.'); }
+  else { var d = await r.json().catch(()=>({})); alert(d.detail || 'Erro ao desativar 2FA'); }
+}
 async function editarUsuario(id) {
   var d = await api('/usuarios/' + id);
   document.getElementById('usu-id').value = d.id;
@@ -1784,7 +1792,8 @@ async function salvarEdicaoCaixa() {
     </div>
     <div class="modal-foot">
       <button class="btn btn-ghost" onclick="fecharModal('modal-usuario')">Cancelar</button>
-      <button class="btn btn-ghost" onclick="fecharModal('modal-usuario');setup2FA()" style="background:#f59e0b;color:#fff;border:none">🔐 Configurar 2FA</button>
+      <button class="btn btn-ghost" onclick="fecharModal('modal-usuario');setup2FA()" style="background:#f59e0b;color:#fff;border:none">🔐 Configurar meu 2FA</button>
+      <button class="btn btn-ghost" onclick="adminDesativar2FA()" style="background:#dc2626;color:#fff;border:none">🔓 Desativar 2FA deste usuário</button>
       <button class="btn btn-primary" onclick="salvarUsuario()">💾 Salvar</button>
     </div>
   </div>
