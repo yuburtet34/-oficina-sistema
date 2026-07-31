@@ -133,7 +133,12 @@
       <div class="nav-item" onclick="navTo('produtos')"><span class="nav-icon">📦</span> Produtos / Estoque</div>
       <div class="nav-item" id="nav-usuarios" onclick="navTo('usuarios')"><span class="nav-icon">👤</span> Usuários</div>
       <div class="nav-item" id="nav-caixa" onclick="navTo('caixa')"><span class="nav-icon">💰</span> Caixa</div>
-    </nav><div style="padding:12px 20px;border-top:1px solid rgba(255,255,255,.15)"><button onclick="fazerLogout()" style="width:100%;padding:8px;border-radius:6px;background:#dc2626;color:#fff;border:none;font-size:13px;font-weight:600;cursor:pointer">Sair</button></div>
+    </nav>
+    <div style="padding:12px 20px;border-top:1px solid rgba(255,255,255,.15)">
+      <div id="sidebar-user-nome" style="color:#fff;font-size:13px;font-weight:600;margin-bottom:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></div>
+      <div onclick="abrirTrocarSenha()" style="color:rgba(255,255,255,.75);font-size:12px;cursor:pointer;text-decoration:underline;margin-bottom:12px">🔑 Trocar senha</div>
+      <button onclick="fazerLogout()" style="width:100%;padding:8px;border-radius:6px;background:#dc2626;color:#fff;border:none;font-size:13px;font-weight:600;cursor:pointer">Sair</button>
+    </div>
   </div>
   <div id="main">
     <div id="page-dashboard" style="display:none"></div>
@@ -328,6 +333,8 @@ async function api(path,opts={}) {
   return r.json();
 }
 
+const PERFIL_LABEL = {admin:'Admin',funcionario:'Funcionário',atendimento:'Atendimento',caixa:'Caixa'};
+const PERFIL_COR = {admin:{bg:'#dbeafe',fg:'#1d4ed8'},funcionario:{bg:'#dcfce7',fg:'#15803d'},atendimento:{bg:'#fef3c7',fg:'#b45309'},caixa:{bg:'#ede9fe',fg:'#6d28d9'}};
 const fmt = v => 'R$ '+Number(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
 const badge = s => `<span class="badge badge-${(s||'').toLowerCase()}">${s||''}</span>`;
 
@@ -1133,10 +1140,39 @@ function irPagProd(){
 }
 function aplicarPermissoes() {
   var isAdmin = window.userPerfil === 'admin';
+  var isCaixa = window.userPerfil === 'caixa';
   var navUsuarios = document.getElementById('nav-usuarios');
   if (navUsuarios) navUsuarios.style.display = isAdmin ? 'flex' : 'none';
   var navCaixa = document.getElementById('nav-caixa');
-  if (navCaixa) navCaixa.style.display = isAdmin ? 'flex' : 'none';
+  if (navCaixa) navCaixa.style.display = (isAdmin || isCaixa) ? 'flex' : 'none';
+  var sidebarNome = document.getElementById('sidebar-user-nome');
+  if (sidebarNome) sidebarNome.textContent = window.userName || '';
+}
+function abrirTrocarSenha() {
+  document.getElementById('tsenha-atual').value = '';
+  document.getElementById('tsenha-nova').value = '';
+  document.getElementById('tsenha-confirma').value = '';
+  document.getElementById('trocar-senha-erro').style.display = 'none';
+  document.getElementById('modal-trocar-senha').classList.add('open');
+}
+async function salvarTrocarSenha() {
+  var atual = document.getElementById('tsenha-atual').value;
+  var nova = document.getElementById('tsenha-nova').value;
+  var confirma = document.getElementById('tsenha-confirma').value;
+  var e = document.getElementById('trocar-senha-erro');
+  e.style.display = 'none';
+  if (!atual || !nova) { e.textContent = 'Preencha a senha atual e a nova senha'; e.style.display = 'block'; return; }
+  if (nova.length < 8) { e.textContent = 'A nova senha deve ter no minimo 8 caracteres'; e.style.display = 'block'; return; }
+  if (nova !== confirma) { e.textContent = 'A confirmacao nao confere com a nova senha'; e.style.display = 'block'; return; }
+  var r = await fetch('/api/me/senha', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({senha_atual: atual, senha_nova: nova})});
+  var d = await r.json().catch(()=>({}));
+  if (r.ok) {
+    fecharModal('modal-trocar-senha');
+    alert('Senha alterada com sucesso!');
+  } else {
+    e.textContent = d.detail || 'Erro ao trocar senha';
+    e.style.display = 'block';
+  }
 }
 function checkAdmin() {
   if (window.userPerfil !== 'admin') {
@@ -1213,7 +1249,7 @@ async function renderUsuarios() {
       <tbody>${d.map(u=>`<tr>
         <td><strong>${u.usuario}</strong></td>
         <td>${u.nome||''}</td>
-        <td><span style="padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;background:${u.perfil==='admin'?'#dbeafe':'#dcfce7'};color:${u.perfil==='admin'?'#1d4ed8':'#15803d'}">${u.perfil==='admin'?'Admin':'Funcionário'}</span></td>
+        <td><span style="padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;background:${(PERFIL_COR[u.perfil]||PERFIL_COR.funcionario).bg};color:${(PERFIL_COR[u.perfil]||PERFIL_COR.funcionario).fg}">${PERFIL_LABEL[u.perfil]||u.perfil}</span></td>
         <td><span style="padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;background:${u.ativo?'#dcfce7':'#fee2e2'};color:${u.ativo?'#15803d':'#dc2626'}">${u.ativo?'Ativo':'Inativo'}</span></td>
         <td><button onclick="editarUsuario(${u.id})" style="padding:4px 10px;border-radius:5px;border:1.5px solid #2563eb;background:#fff;color:#2563eb;font-size:11px;cursor:pointer">Editar</button></td>
       </tr>`).join('')}</tbody></table>
@@ -1707,6 +1743,25 @@ async function salvarEdicaoCaixa() {
   </div>
 </div>
 
+<div class="modal-overlay" id="modal-trocar-senha">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-head">
+      <div class="modal-title">🔑 Trocar Senha</div>
+      <button class="close-btn" onclick="fecharModal('modal-trocar-senha')">×</button>
+    </div>
+    <div class="modal-body">
+      <div id="trocar-senha-erro" style="display:none;background:#fee2e2;color:#dc2626;padding:8px 12px;border-radius:6px;font-size:12px;margin-bottom:12px"></div>
+      <div class="form-group"><label>Senha atual</label><input id="tsenha-atual" type="password" placeholder="Senha atual"></div>
+      <div class="form-group"><label>Nova senha</label><input id="tsenha-nova" type="password" placeholder="Mínimo 8 caracteres"></div>
+      <div class="form-group"><label>Confirmar nova senha</label><input id="tsenha-confirma" type="password" placeholder="Repita a nova senha"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="fecharModal('modal-trocar-senha')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarTrocarSenha()">💾 Salvar</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="modal-usuario">
   <div class="modal" style="max-width:480px">
     <div class="modal-head">
@@ -1721,7 +1776,7 @@ async function salvarEdicaoCaixa() {
         <label>Senha (deixe em branco para manter)</label>
         <div style="position:relative"><input id="usu-senha" type="password" placeholder="Nova senha" style="width:100%;padding-right:40px"><button type="button" onclick="var i=document.getElementById('usu-senha');i.type=i.type==='password'?'text':'password';this.textContent=i.type==='password'?'👁️':'🙈'" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;padding:4px">👁️</button></div>
       </div>
-      <div class="form-group"><label>Perfil</label><select id="usu-perfil"><option value="admin">Administrador</option><option value="funcionario">Funcionário</option></select></div>
+      <div class="form-group"><label>Perfil</label><select id="usu-perfil"><option value="admin">Administrador</option><option value="funcionario">Funcionário</option><option value="atendimento">Atendimento</option><option value="caixa">Caixa</option></select></div>
       <div class="form-group"><label>Status</label><select id="usu-ativo"><option value="1">Ativo</option><option value="0">Inativo</option></select></div>
     </div>
     <div class="modal-foot">

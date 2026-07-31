@@ -121,10 +121,14 @@ def exigir_login(t=None):
     u=get_usuario_atual(t) 
     if not u: raise HTTPException(401,"Nao autenticado") 
     return u 
-def exigir_admin(t=None): 
-    u=exigir_login(t) 
-    if u["perfil"]!="admin": raise HTTPException(403,"Acesso restrito") 
-    return u 
+def exigir_admin(t=None):
+    u=exigir_login(t)
+    if u["perfil"]!="admin": raise HTTPException(403,"Acesso restrito")
+    return u
+def exigir_caixa(t=None):
+    u=exigir_login(t)
+    if u["perfil"] not in ("admin","caixa"): raise HTTPException(403,"Acesso restrito")
+    return u
 def criar_admin_padrao(): 
     with get_db() as db: 
         if db.execute("SELECT COUNT(*) FROM usuarios").fetchone()[0]==0: 
@@ -767,7 +771,7 @@ async def desativar_2fa(session_token: str = Cookie(None), req: Request = None):
 
 @app.get("/api/caixa")
 def listar_caixa(data: str = "", session_token: str = Cookie(None)):
-    exigir_admin(session_token)
+    exigir_caixa(session_token)
     with get_db() as db:
         if data:
             entradas = db.execute("SELECT * FROM caixa WHERE tipo='entrada' AND substr(data,1,7)=? ORDER BY data DESC, id DESC", (data[:7],)).fetchall()
@@ -783,7 +787,7 @@ def listar_caixa(data: str = "", session_token: str = Cookie(None)):
 
 @app.post("/api/caixa")
 async def criar_caixa(req: Request, session_token: str = Cookie(None)):
-    exigir_admin(session_token)
+    exigir_caixa(session_token)
     body = await req.json()
     hora = datetime.now().strftime("%H:%M")
     with get_db() as db:
@@ -797,7 +801,7 @@ async def criar_caixa(req: Request, session_token: str = Cookie(None)):
 
 @app.put("/api/caixa/{caixa_id}")
 async def atualizar_caixa(caixa_id: int, req: Request, session_token: str = Cookie(None)):
-    exigir_admin(session_token)
+    exigir_caixa(session_token)
     body = await req.json()
     with get_db() as db:
         db.execute("UPDATE caixa SET valor=? WHERE id=?", (body.get('valor', 0), caixa_id))
@@ -806,7 +810,7 @@ async def atualizar_caixa(caixa_id: int, req: Request, session_token: str = Cook
 
 @app.delete("/api/caixa/{caixa_id}")
 def deletar_caixa(caixa_id: int, session_token: str = Cookie(None)):
-    exigir_admin(session_token)
+    exigir_caixa(session_token)
     with get_db() as db:
         db.execute("DELETE FROM caixa WHERE id=?", (caixa_id,))
         db.commit()
@@ -879,9 +883,32 @@ def logout(session_token: str=Cookie(None)):
     return resp 
 @app.get("/api/me")
 def me(session_token: str=Cookie(None)):
-    user=get_usuario_atual(session_token) 
-    if not user: raise HTTPException(401,"Nao autenticado") 
-    return {"nome":user["nome"],"usuario":user["usuario"],"perfil":user["perfil"]} 
+    user=get_usuario_atual(session_token)
+    if not user: raise HTTPException(401,"Nao autenticado")
+    return {"nome":user["nome"],"usuario":user["usuario"],"perfil":user["perfil"]}
+
+@app.post("/api/me/senha")
+async def trocar_minha_senha(req: Request, session_token: str = Cookie(None)):
+    user = exigir_login(session_token)
+    body = await req.json()
+    senha_atual = body.get("senha_atual", "")
+    senha_nova = body.get("senha_nova", "")
+    if not senha_nova or len(senha_nova) < 8:
+        raise HTTPException(400, "Nova senha deve ter no minimo 8 caracteres")
+    with get_db() as db:
+        row = db.execute("SELECT senha_hash FROM usuarios WHERE id=?", (user["id"],)).fetchone()
+    h = row["senha_hash"]
+    if h.startswith("$2b$"):
+        ok = bcrypt.checkpw(senha_atual.encode(), h.encode())
+    else:
+        ok = hash_senha(senha_atual) == h
+    if not ok:
+        raise HTTPException(401, "Senha atual incorreta")
+    novo_hash = bcrypt.hashpw(senha_nova.encode(), bcrypt.gensalt()).decode()
+    with get_db() as db:
+        db.execute("UPDATE usuarios SET senha_hash=? WHERE id=?", (novo_hash, user["id"]))
+        db.commit()
+    return {"ok": True} 
 @app.get("/api/usuarios")
 def listar_usuarios(session_token: str=Cookie(None)): 
     exigir_admin(session_token) 
